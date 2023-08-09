@@ -111,124 +111,6 @@ def set_seed(args):
     if args.n_gpu > 0:
         torch.cuda.manual_seed_all(args.seed)
 
-def inference(input_text, model, tokenizer, args):
-    
-    # 初始化参数
-    no_decay = ['bias', 'LayerNorm.weight']
-    optimizer_grouped_parameters = [
-        {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-         'weight_decay': args.weight_decay},
-        {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
-    ]
-
-    # 初始化优化器和学习率衰减函数
-    optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
-    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.warmup_steps,
-                                                num_training_steps=args.max_steps)
-
-    # 多GPU计算
-    if args.n_gpu > 1:
-        model = torch.nn.DataParallel(model)
-
-    inputs  = tokenizer(input_text, return_tensors="pt", padding=True, truncation=True)
-    
-    # 获取输入张量
-    input_ids = inputs["input_ids"].to(model.device)
-    labels = inputs.get("labels", None)
-
-    # 模型推理
-    with torch.no_grad():
-        lm_loss, logit = model(input_ids=input_ids, labels=labels)
-
-    '''
-    依据是 evaluate 函数 237 行的
-    logits = np.concatenate(logits,0)
-    y_trues = np.concatenate(y_trues,0)
-    best_threshold = 0.5
-    best_f1 = 0
-    y_preds = logits[:,1]>best_threshold
-    '''
-
-    # 计算预测
-    logits = logit.cpu().numpy()
-    y_preds = logits[:, 1] > 0.5
-
-    '''
-    到这里应该是推理结束，没有问题的，关于行号的推断，需要再看看
-    下面是尝试写的关于行号的推断
-    
-    flaw_line_numbers的推断是参考这里
-    main文件827行 line_level_localization
-
-    def line_level_localization(flaw_lines: str, tokenizer, model, mini_batch, original_func: str, args,
-                            top_k_loc: list, top_k_constant: list, reasoning_method: str, index: int):
-    # function for captum LIG.
-    def predict(input_ids):
-        return model(input_ids=input_ids)[0]
-
-    def lig_forward(input_ids):
-        logits = model(input_ids=input_ids)[0]
-        y_pred = 1 # for positive attribution, y_pred = 0 for negative attribution
-        pred_prob = logits[y_pred].unsqueeze(-1)
-        return pred_prob
-    '''
-
-    # 定义推断方法
-    if args.reasoning_method == "all":
-            all_reasoning_method = ["attention", "lig", "saliency", "deeplift", "deeplift_shap", "gradient_shap"]
-    else:
-        all_reasoning_method = [args.reasoning_method]
-
-
-    # 两个模型传递函数
-    def predict(input_ids):
-        return model(input_ids=input_ids)[0]
-
-    def lig_forward(input_ids):
-        logits = model(input_ids=input_ids)[0]
-        y_pred = 1 # for positive attribution, y_pred = 0 for negative attribution
-        pred_prob = logits[y_pred].unsqueeze(-1)
-        return pred_prob
-    
-    flaw_line_seperator = "/~/"
-    all_tokens = tokenizer.convert_ids_to_tokens(input_text)
-    all_tokens = [token.replace("Ġ", "") for token in all_tokens]
-    all_tokens = [token.replace("ĉ", "Ċ") for token in all_tokens]
-    original_lines = ''.join(all_tokens).split("Ċ")
-
-    flaw_lines = get_all_flaw_lines(flaw_lines=flaw_lines, flaw_line_seperator=flaw_line_seperator)
-    flaw_tokens_encoded = encode_all_lines(all_lines=flaw_lines, tokenizer=tokenizer)
-    verified_flaw_lines = []
-    for i in range(len(flaw_tokens_encoded)):
-        encoded_flaw = ''.join(flaw_tokens_encoded[i])
-        encoded_all = ''.join(all_tokens)
-        if encoded_flaw in encoded_all:
-            verified_flaw_lines.append(flaw_tokens_encoded[i])
-
-    # 他有不同的推断方式，这里只用attention
-    reasoning_method = "attention"
-    if reasoning_method == "attention":
-        model.to(args.device)
-        with torch.no_grad():
-            prob, attentions = model(input_ids=input_ids, output_attentions=True)
-        attentions = attentions[0][0]
-        attention = None
-        for i in range(len(attentions)):
-            layer_attention = attentions[i]
-            layer_attention = sum(layer_attention)
-            if attention is None:
-                attention = layer_attention
-            else:
-                attention += layer_attention
-        attention = clean_special_token_values(attention, padding=True)
-        word_att_scores = get_word_att_scores(all_tokens=all_tokens, att_scores=attention)
-        all_lines_score, flaw_line_indices = get_all_lines_score(word_att_scores, verified_flaw_lines)
-
-    # 输出结果
-    # logits
-    return logits, y_preds, all_lines_score, flaw_line_indices
-
-
 def train(args, train_dataset, model, tokenizer, eval_dataset):
     """ Train the model """
     # build dataloader
@@ -399,6 +281,7 @@ def test(args, model, tokenizer, test_dataset, best_threshold=0.5):
             logits.append(logit.cpu().numpy())
             y_trues.append(labels.cpu().numpy())
         nb_eval_steps += 1
+    
     # calculate scores
     logits = np.concatenate(logits, 0)
     y_trues = np.concatenate(y_trues, 0)
@@ -1225,7 +1108,7 @@ def encode_one_line(line, tokenizer):
     code_tokens = tokenizer.tokenize("@ " + line)
     return [token.replace("Ġ", "") for token in code_tokens if token != "@"]
 
-def new_main():
+def main():
     parser = argparse.ArgumentParser()
     ## parameters
     parser.add_argument("--train_data_file", default=None, type=str, required=False,
@@ -1318,10 +1201,6 @@ def new_main():
     # bpe non-pretrained tokenizer
     parser.add_argument("--use_non_pretrained_tokenizer", default=False, action='store_true',
                         help="Whether to use non-pretrained bpe tokenizer.")
-    
-    # 这里的修改主要是加了一个参数，用于指定inference的文本
-    parser.add_argument("--inference_text", default=None, type=str)
-    
     args = parser.parse_args()
     # Setup CUDA, GPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -1348,15 +1227,22 @@ def new_main():
     else:
         model = RobertaForSequenceClassification.from_pretrained(args.model_name_or_path, config=config, ignore_mismatched_sizes=True)    
     model = Model(model, config, tokenizer, args)
-
-    '''
-    get inference text from args.inference_text
-    peek to inference
-    '''
-    inference_text = args.inference_text
-    if inference_text is not None:
-        inference(inference_text, model, tokenizer, args)
-
+    logger.info("Training/evaluation parameters %s", args)
+    # Training
+    if args.do_train:
+        train_dataset = TextDataset(tokenizer, args, file_type='train')
+        eval_dataset = TextDataset(tokenizer, args, file_type='eval')
+        train(args, train_dataset, model, tokenizer, eval_dataset)
+    # Evaluation
+    results = {}
+    if args.do_test:
+        checkpoint_prefix = f'checkpoint-best-f1/{args.model_name}'
+        output_dir = os.path.join(args.output_dir, '{}'.format(checkpoint_prefix))  
+        model.load_state_dict(torch.load(output_dir, map_location=args.device))
+        model.to(args.device)
+        test_dataset = TextDataset(tokenizer, args, file_type='test')
+        test(args, model, tokenizer, test_dataset, best_threshold=0.5)
+    return results
 
 if __name__ == "__main__":
-    new_main()
+    main()
