@@ -153,6 +153,7 @@ def inference(input_text, model, tokenizer, args):
 
     # 计算预测
     logits = logit.cpu().numpy()
+    confidence = logits[:, 1]
     y_preds = logits[:, 1] > 0.5
 
     '''
@@ -233,7 +234,7 @@ def inference(input_text, model, tokenizer, args):
 
     # 输出结果
     # logits
-    return logits, y_preds, all_lines_score, flaw_line_indices
+    return logits, y_preds, confidence , all_lines_score, flaw_line_indices
 
 
 def train(args, train_dataset, model, tokenizer, eval_dataset):
@@ -1362,7 +1363,10 @@ def new_main():
     '''
     inference_text = args.inference_text
     if inference_text is not None:
-        inference(inference_text, model, tokenizer, args)
+        logits, y_preds, confidence , all_lines_score, flaw_line_indices = inference(inference_text, model, tokenizer, args)
+        print('logits: ', logits)
+        print('y_preds: ', y_preds)
+        print('confidence: ', confidence)
 
 
 if __name__ == "__main__":
