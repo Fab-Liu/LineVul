@@ -77,6 +77,51 @@
                 "--reasoning_method",
                 "attention"
             ]
-        }
+        },
+        {
+            "name": "inference text",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "python": "${command:python.interpreterPath}",
+            "console": "integratedTerminal",
+            "args": [
+                "--model_name",
+                "12heads_linevul_model.bin",
+                "--output_dir",
+                "D:\\Github Project\\LineVul\\linevul\\saved_models",
+                "--model_type",
+                "roberta",
+                "--tokenizer_name",
+                "D:\\Github Project\\LineVul\\linevul\\codebert-base",
+                "--model_name_or_path",
+                "D:\\Github Project\\LineVul\\linevul\\codebert-base",
+                "--do_test",
+                "--train_data_file",
+                "D:\\Github Project\\LineVul\\data\\big-vul_dataset\\trainFuzz.csv",
+                "--eval_data_file",
+                "D:\\Github Project\\LineVul\\data\\big-vul_dataset\\valFuzz.csv",
+                "--test_data_file",
+                "D:\\Github Project\\LineVul\\data\\big-vul_dataset\\test.csv",
+                "--epochs",
+                "1",
+                "--learning_rate",
+                "2e-5",
+                "--block_size",
+                "256",          
+                "--train_batch_size",
+                "16",
+                "--eval_batch_size",
+                "16",
+                "--seed",
+                "123456",
+                "--do_sorting_by_line_scores",
+                "--do_sorting_by_pred_prob",
+                "--reasoning_method",
+                "attention",
+                "--inference_text",
+                "void  Msg() {\n    MessageBoxA(NULL, \"嘿嘿！\", \"堆栈溢出测试\", 0);\n}"
+            ]
+        },
     ]
 }
