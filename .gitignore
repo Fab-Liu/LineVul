@@ -5,3 +5,4 @@ linevul/saved_models/checkpoint-best-f1/12heads_linevul_model.bin
 linevul/__pycache__/*
 data/output/saved_models/trainFuzz_valFuzz_test.bin
 data/cwe_category/*
+codebert-base.tar

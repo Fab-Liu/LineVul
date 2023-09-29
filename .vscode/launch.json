@@ -12,7 +12,6 @@
                 "--model_name",
                 "trainFuzz_valFuzz_test.bin",
                 "--output_dir",
-                // "C:\\Github_Repository\\LineVul\\linevul\\saved_models",
                 "C:\\Github_Repository\\LineVul\\data\\output\\saved_models",
                 "--model_type",
                 "roberta",
