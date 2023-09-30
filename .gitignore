@@ -6,3 +6,5 @@ linevul/__pycache__/*
 data/output/saved_models/trainFuzz_valFuzz_test.bin
 data/cwe_category/*
 codebert-base.tar
+data/output/saved_models/saved_models/trainFuzz_valFuzz_test.bin
+data/output/saved_models/checkpoint-best-f1/trainFuzz_valFuzz_test.bin

@@ -40,6 +40,11 @@ from captum.attr import LayerIntegratedGradients, DeepLift, DeepLiftShap, Gradie
 # word-level tokenizer
 from tokenizers import Tokenizer
 
+global pred_success
+pred_success = 0
+global pred_fail
+pred_fail = 0
+
 logger = logging.getLogger(__name__)
 
 class InputFeatures(object):
@@ -288,7 +293,13 @@ def test(args, model, tokenizer, test_dataset, best_threshold=0.5):
     acc = accuracy_score(y_trues, y_preds)
     recall = recall_score(y_trues, y_preds)
     precision = precision_score(y_trues, y_preds)   
-    f1 = f1_score(y_trues, y_preds)             
+    f1 = f1_score(y_trues, y_preds) 
+
+    if y_trues == y_preds:
+        pred_success += 1
+    if y_trues != y_preds:
+        pred_fail += 1
+
     result = {
         "test_accuracy": float(acc),
         "test_recall": float(recall),
@@ -1241,6 +1252,9 @@ def main():
         model.to(args.device)
         test_dataset = TextDataset(tokenizer, args, file_type='test')
         test(args, model, tokenizer, test_dataset, best_threshold=0.5)
+        print("Test results:")
+        print("pred_success: ", pred_success)
+        print("pred_fail: ", pred_fail)
     return results
 
 if __name__ == "__main__":
