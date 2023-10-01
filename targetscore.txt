@@ -1,0 +1,1671 @@
+Msg::1::78.7717::void  Msg() {
+Msg::2::408.1648::	MessageBoxA(NULL, "嘿嘿！", "堆栈溢出测试", 0);
+Msg::3::10.4084::}
+Add::1::139.8650::int  Add(int a, int b) {
+Add::2::95.6055::	int* p = &a;
+Add::3::150.6759::	*(p-1) = (int)Msg;
+Add::4::69.2367::	return a + b;
+Add::5::10.2770::}
+main::1::54.6297::void main() {
+main::2::138.8641::	printf("%d", Add(1, 2));
+main::3::59.6045::	system("pause");
+main::4::35.3849::	return;
+main::5::10.1404::}
+derive_spatial_luma_vector_prediction::1::230.1341::// 8.5.3.1.6
+derive_spatial_luma_vector_prediction::2::431.3482::void derive_spatial_luma_vector_prediction(base_context* ctx,
+derive_spatial_luma_vector_prediction::3::493.5695::                                           de265_image* img,
+derive_spatial_luma_vector_prediction::4::531.9108::                                           const slice_segment_header* shdr,
+derive_spatial_luma_vector_prediction::5::689.5804::                                           int xC,int yC,int nCS,int xP,int yP,
+derive_spatial_luma_vector_prediction::6::594.9593::                                           int nPbW,int nPbH, int X,
+derive_spatial_luma_vector_prediction::7::537.1721::                                           int refIdxLX, int partIdx,
+derive_spatial_luma_vector_prediction::8::595.5970::                                           uint8_t out_availableFlagLXN[2],
+derive_spatial_luma_vector_prediction::9::544.6716::                                           MotionVector out_mvLXN[2])
+derive_spatial_luma_vector_prediction::10::39.6299::{
+derive_spatial_luma_vector_prediction::11::301.2087::  if (refIdxLX >= MAX_NUM_REF_PICS) {
+derive_spatial_luma_vector_prediction::12::532.1599::    ctx->add_warning(DE265_WARNING_INCORRECT_MOTION_VECTOR_SCALING, false);
+derive_spatial_luma_vector_prediction::13::340.5375::    img->integrity = INTEGRITY_DECODING_ERRORS;
+derive_spatial_luma_vector_prediction::14::92.1616::    out_availableFlagLXN[0] = false;
+derive_spatial_luma_vector_prediction::15::202.5281::    out_availableFlagLXN[1] = false;
+derive_spatial_luma_vector_prediction::16::221.1711::    out_mvLXN[0] = MotionVector{};
+derive_spatial_luma_vector_prediction::17::217.5882::    out_mvLXN[1] = MotionVector{};
+derive_spatial_luma_vector_prediction::18::64.8187::    return;
+derive_spatial_luma_vector_prediction::19::34.8934::  }
+derive_spatial_luma_vector_prediction::20::144.6198::  int isScaledFlagLX = 0;
+derive_spatial_luma_vector_prediction::21::97.8417::  const int A=0;
+derive_spatial_luma_vector_prediction::22::97.2986::  const int B=1;
+derive_spatial_luma_vector_prediction::23::169.4641::  out_availableFlagLXN[A] = 0;
+derive_spatial_luma_vector_prediction::24::170.4811::  out_availableFlagLXN[B] = 0;
+derive_spatial_luma_vector_prediction::25::74.3089::  // --- A ---
+derive_spatial_luma_vector_prediction::26::61.9744::  // 1.
+derive_spatial_luma_vector_prediction::27::155.8167::  int xA[2], yA[2];
+derive_spatial_luma_vector_prediction::28::148.9188::  xA[0] = xP-1;
+derive_spatial_luma_vector_prediction::29::176.0562::  yA[0] = yP + nPbH;
+derive_spatial_luma_vector_prediction::30::153.7812::  xA[1] = xA[0];
+derive_spatial_luma_vector_prediction::31::177.5799::  yA[1] = yA[0]-1;
+derive_spatial_luma_vector_prediction::32::59.3073::  // 2.
+derive_spatial_luma_vector_prediction::33::168.2144::  out_availableFlagLXN[A] = 0;
+derive_spatial_luma_vector_prediction::34::180.2883::  out_mvLXN[A].x = 0;
+derive_spatial_luma_vector_prediction::35::185.5391::  out_mvLXN[A].y = 0;
+derive_spatial_luma_vector_prediction::36::97.2497::  // 3. / 4.
+derive_spatial_luma_vector_prediction::37::99.0050::  bool availableA[2];
+derive_spatial_luma_vector_prediction::38::644.4591::  availableA[0] = img->available_pred_blk(xC,yC, nCS, xP,yP, nPbW,nPbH,partIdx, xA[0],yA[0]);
+derive_spatial_luma_vector_prediction::39::655.7600::  availableA[1] = img->available_pred_blk(xC,yC, nCS, xP,yP, nPbW,nPbH,partIdx, xA[1],yA[1]);
+derive_spatial_luma_vector_prediction::40::62.7414::  // 5.
+derive_spatial_luma_vector_prediction::41::199.4772::  if (availableA[0] || availableA[1]) {
+derive_spatial_luma_vector_prediction::42::142.9057::    isScaledFlagLX = 1;
+derive_spatial_luma_vector_prediction::43::35.8248::  }
+derive_spatial_luma_vector_prediction::44::187.6632::  // 6.  test A0 and A1  (Ak)
+derive_spatial_luma_vector_prediction::45::122.8423::  int refIdxA=-1;
+derive_spatial_luma_vector_prediction::46::165.8008::  // the POC we want to reference in this PB
+derive_spatial_luma_vector_prediction::47::414.5409::  const de265_image* tmpimg = ctx->get_image(shdr->RefPicList[X][ refIdxLX ]);
+derive_spatial_luma_vector_prediction::48::170.4601::  if (tmpimg==NULL) { return; }
+derive_spatial_luma_vector_prediction::49::44.9284::  const int referenced_POC = tmpimg->PicOrderCntVal;
+derive_spatial_luma_vector_prediction::51::151.1843::    if (availableA[k] &&
+derive_spatial_luma_vector_prediction::52::377.4350::        out_availableFlagLXN[A]==0 && // no A?-predictor so far
+derive_spatial_luma_vector_prediction::53::407.4319::        img->get_pred_mode(xA[k],yA[k]) != MODE_INTRA) {
+derive_spatial_luma_vector_prediction::54::142.5447::      int Y=1-X;
+derive_spatial_luma_vector_prediction::55::381.2228::      const PBMotion& vi = img->get_mv_info(xA[k],yA[k]);
+derive_spatial_luma_vector_prediction::56::260.0481::      logtrace(LogMotion,"MVP A%d=\n",k);
+derive_spatial_luma_vector_prediction::57::141.3833::      logmvcand(vi);
+derive_spatial_luma_vector_prediction::58::191.9453::      const de265_image* imgX = NULL;
+derive_spatial_luma_vector_prediction::59::524.1889::      if (vi.predFlag[X]) imgX = ctx->get_image(shdr->RefPicList[X][ vi.refIdx[X] ]);
+derive_spatial_luma_vector_prediction::60::196.6299::      const de265_image* imgY = NULL;
+derive_spatial_luma_vector_prediction::61::539.1241::      if (vi.predFlag[Y]) imgY = ctx->get_image(shdr->RefPicList[Y][ vi.refIdx[Y] ]);
+derive_spatial_luma_vector_prediction::62::234.8116::      // check whether the predictor X is available and references the same POC
+derive_spatial_luma_vector_prediction::63::399.5859::      if (vi.predFlag[X] && imgX && imgX->PicOrderCntVal == referenced_POC) {
+derive_spatial_luma_vector_prediction::64::420.3488::        logtrace(LogMotion,"take A%d/L%d as A candidate with same POC\n",k,X);
+derive_spatial_luma_vector_prediction::65::219.7479::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::66::288.7475::        out_mvLXN[A] = vi.mv[X];
+derive_spatial_luma_vector_prediction::67::234.2914::        refIdxA = vi.refIdx[X];
+derive_spatial_luma_vector_prediction::68::64.9098::      }
+derive_spatial_luma_vector_prediction::69::285.0236::      // check whether the other predictor (Y) is available and references the same POC
+derive_spatial_luma_vector_prediction::70::423.2102::      else if (vi.predFlag[Y] && imgY && imgY->PicOrderCntVal == referenced_POC) {
+derive_spatial_luma_vector_prediction::71::458.6632::        logtrace(LogMotion,"take A%d/L%d as A candidate with same POC\n",k,Y);
+derive_spatial_luma_vector_prediction::72::226.0326::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::73::290.3179::        out_mvLXN[A] = vi.mv[Y];
+derive_spatial_luma_vector_prediction::74::228.4218::        refIdxA = vi.refIdx[Y];
+derive_spatial_luma_vector_prediction::75::62.9539::      }
+derive_spatial_luma_vector_prediction::76::47.7499::    }
+derive_spatial_luma_vector_prediction::77::36.2193::  }
+derive_spatial_luma_vector_prediction::78::301.8848::  // 7. If there is no predictor referencing the same POC, we take any other reference as
+derive_spatial_luma_vector_prediction::79::289.9316::  //    long as it is the same type of reference (long-term / short-term)
+derive_spatial_luma_vector_prediction::80::364.8517::  for (int k=0 ; k<=1 && out_availableFlagLXN[A]==0 ; k++) {
+derive_spatial_luma_vector_prediction::81::128.0671::    int refPicList=-1;
+derive_spatial_luma_vector_prediction::82::136.2762::    if (availableA[k] &&
+derive_spatial_luma_vector_prediction::83::318.8507::        // TODO: we could remove this call by storing the result of the similar computation above
+derive_spatial_luma_vector_prediction::84::399.5252::        img->get_pred_mode(xA[k],yA[k]) != MODE_INTRA) {
+derive_spatial_luma_vector_prediction::85::141.6382::      int Y=1-X;
+derive_spatial_luma_vector_prediction::86::381.9064::      const PBMotion& vi = img->get_mv_info(xA[k],yA[k]);
+derive_spatial_luma_vector_prediction::87::210.3310::      if (vi.predFlag[X]==1 &&
+derive_spatial_luma_vector_prediction::88::556.2764::          shdr->LongTermRefPic[X][refIdxLX] == shdr->LongTermRefPic[X][ vi.refIdx[X] ]) {
+derive_spatial_luma_vector_prediction::89::446.8063::        logtrace(LogMotion,"take A%D/L%d as A candidate with different POCs\n",k,X);
+derive_spatial_luma_vector_prediction::90::231.6211::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::91::297.6886::        out_mvLXN[A] = vi.mv[X];
+derive_spatial_luma_vector_prediction::92::245.1558::        refIdxA = vi.refIdx[X];
+derive_spatial_luma_vector_prediction::93::154.9092::        refPicList = X;
+derive_spatial_luma_vector_prediction::94::33.4300::      }
+derive_spatial_luma_vector_prediction::96::655.3190::               shdr->LongTermRefPic[X][refIdxLX] == shdr->LongTermRefPic[Y][ vi.refIdx[Y] ]) {
+derive_spatial_luma_vector_prediction::97::457.5874::        logtrace(LogMotion,"take A%d/L%d as A candidate with different POCs\n",k,Y);
+derive_spatial_luma_vector_prediction::98::221.5365::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::99::296.0308::        out_mvLXN[A] = vi.mv[Y];
+derive_spatial_luma_vector_prediction::100::236.2637::        refIdxA = vi.refIdx[Y];
+derive_spatial_luma_vector_prediction::101::146.7216::        refPicList = Y;
+derive_spatial_luma_vector_prediction::102::64.7599::      }
+derive_spatial_luma_vector_prediction::103::53.9657::    }
+derive_spatial_luma_vector_prediction::104::233.7932::    if (out_availableFlagLXN[A]==1) {
+derive_spatial_luma_vector_prediction::105::177.0657::      if (refIdxA<0) {
+derive_spatial_luma_vector_prediction::106::357.4395::        out_availableFlagLXN[0] = out_availableFlagLXN[1] = false;
+derive_spatial_luma_vector_prediction::107::129.5664::        return; // error
+derive_spatial_luma_vector_prediction::108::66.2000::      }
+derive_spatial_luma_vector_prediction::109::183.7471::      assert(refIdxA>=0);
+derive_spatial_luma_vector_prediction::110::177.7560::      assert(refPicList>=0);
+derive_spatial_luma_vector_prediction::111::491.3536::      const de265_image* refPicA = ctx->get_image(shdr->RefPicList[refPicList][refIdxA ]);
+derive_spatial_luma_vector_prediction::112::546.7984::      const de265_image* refPicX = ctx->get_image(shdr->RefPicList[X         ][refIdxLX]);
+derive_spatial_luma_vector_prediction::113::389.2231::      //int picStateA = shdr->RefPicList_PicState[refPicList][refIdxA ];
+derive_spatial_luma_vector_prediction::114::440.0976::      //int picStateX = shdr->RefPicList_PicState[X         ][refIdxLX];
+derive_spatial_luma_vector_prediction::115::367.5873::      int isLongTermA = shdr->LongTermRefPic[refPicList][refIdxA ];
+derive_spatial_luma_vector_prediction::116::291.0103::      int isLongTermX = shdr->LongTermRefPic[X         ][refIdxLX];
+derive_spatial_luma_vector_prediction::117::445.6613::      logtrace(LogMotion,"scale MVP A: A-POC:%d X-POC:%d\n",
+derive_spatial_luma_vector_prediction::118::393.4401::               refPicA->PicOrderCntVal,refPicX->PicOrderCntVal);
+derive_spatial_luma_vector_prediction::119::228.9388::      if (!isLongTermA && !isLongTermX)
+derive_spatial_luma_vector_prediction::120::75.9930::      /*
+derive_spatial_luma_vector_prediction::121::213.8279::      if (picStateA == UsedForShortTermReference &&
+derive_spatial_luma_vector_prediction::122::220.4923::          picStateX == UsedForShortTermReference)
+derive_spatial_luma_vector_prediction::123::69.7650::      */
+derive_spatial_luma_vector_prediction::124::79.2694::        {
+derive_spatial_luma_vector_prediction::125::361.6357::          int distA = img->PicOrderCntVal - refPicA->PicOrderCntVal;
+derive_spatial_luma_vector_prediction::126::302.6607::          int distX = img->PicOrderCntVal - referenced_POC;
+derive_spatial_luma_vector_prediction::127::510.5249::          if (!scale_mv(&out_mvLXN[A], out_mvLXN[A], distA, distX)) {
+derive_spatial_luma_vector_prediction::128::481.5593::            ctx->add_warning(DE265_WARNING_INCORRECT_MOTION_VECTOR_SCALING, false);
+derive_spatial_luma_vector_prediction::129::323.1897::            img->integrity = INTEGRITY_DECODING_ERRORS;
+derive_spatial_luma_vector_prediction::130::92.3894::          }
+derive_spatial_luma_vector_prediction::131::76.7261::        }
+derive_spatial_luma_vector_prediction::132::48.9404::    }
+derive_spatial_luma_vector_prediction::133::35.0834::  }
+derive_spatial_luma_vector_prediction::134::77.2022::  // --- B ---
+derive_spatial_luma_vector_prediction::135::68.7442::  // 1.
+derive_spatial_luma_vector_prediction::136::173.7636::  int xB[3], yB[3];
+derive_spatial_luma_vector_prediction::137::195.0061::  xB[0] = xP+nPbW;
+derive_spatial_luma_vector_prediction::138::166.3580::  yB[0] = yP-1;
+derive_spatial_luma_vector_prediction::139::192.5570::  xB[1] = xB[0]-1;
+derive_spatial_luma_vector_prediction::140::168.0833::  yB[1] = yP-1;
+derive_spatial_luma_vector_prediction::141::166.3864::  xB[2] = xP-1;
+derive_spatial_luma_vector_prediction::142::165.2324::  yB[2] = yP-1;
+derive_spatial_luma_vector_prediction::143::69.1027::  // 2.
+derive_spatial_luma_vector_prediction::144::187.7793::  out_availableFlagLXN[B] = 0;
+derive_spatial_luma_vector_prediction::145::201.7265::  out_mvLXN[B].x = 0;
+derive_spatial_luma_vector_prediction::146::201.5637::  out_mvLXN[B].y = 0;
+derive_spatial_luma_vector_prediction::147::6.1714::  // 3. test B0,B1,B2 (Bk)
+derive_spatial_luma_vector_prediction::149::112.2920::  bool availableB[3];
+derive_spatial_luma_vector_prediction::150::223.0104::  for (int k=0;k<3;k++) {
+derive_spatial_luma_vector_prediction::151::713.1144::    availableB[k] = img->available_pred_blk(xC,yC, nCS, xP,yP, nPbW,nPbH,partIdx, xB[k],yB[k]);
+derive_spatial_luma_vector_prediction::152::294.9926::    if (availableB[k] && out_availableFlagLXN[B]==0) {
+derive_spatial_luma_vector_prediction::153::139.9250::      int Y=1-X;
+derive_spatial_luma_vector_prediction::154::376.8656::      const PBMotion& vi = img->get_mv_info(xB[k],yB[k]);
+derive_spatial_luma_vector_prediction::155::255.0467::      logtrace(LogMotion,"MVP B%d=\n",k);
+derive_spatial_luma_vector_prediction::156::145.4369::      logmvcand(vi);
+derive_spatial_luma_vector_prediction::157::191.1090::      const de265_image* imgX = NULL;
+derive_spatial_luma_vector_prediction::158::527.7561::      if (vi.predFlag[X]) imgX = ctx->get_image(shdr->RefPicList[X][ vi.refIdx[X] ]);
+derive_spatial_luma_vector_prediction::159::194.9249::      const de265_image* imgY = NULL;
+derive_spatial_luma_vector_prediction::160::531.0328::      if (vi.predFlag[Y]) imgY = ctx->get_image(shdr->RefPicList[Y][ vi.refIdx[Y] ]);
+derive_spatial_luma_vector_prediction::161::400.5255::      if (vi.predFlag[X] && imgX && imgX->PicOrderCntVal == referenced_POC) {
+derive_spatial_luma_vector_prediction::162::444.2259::        logtrace(LogMotion,"a) take B%d/L%d as B candidate with same POC\n",k,X);
+derive_spatial_luma_vector_prediction::163::215.9078::        out_availableFlagLXN[B]=1;
+derive_spatial_luma_vector_prediction::164::290.8272::        out_mvLXN[B] = vi.mv[X];
+derive_spatial_luma_vector_prediction::165::235.7608::        refIdxB = vi.refIdx[X];
+derive_spatial_luma_vector_prediction::166::65.2578::      }
+derive_spatial_luma_vector_prediction::167::438.9611::      else if (vi.predFlag[Y] && imgY && imgY->PicOrderCntVal == referenced_POC) {
+derive_spatial_luma_vector_prediction::168::191.7245::        logtrace(LogMotion,"b) take B%d/L%d as B candidate with same POC\n",k,Y);
+derive_spatial_luma_vector_prediction::169::238.9262::        out_availableFlagLXN[B]=1;
+derive_spatial_luma_vector_prediction::170::304.3784::        out_mvLXN[B] = vi.mv[Y];
+derive_spatial_luma_vector_prediction::171::237.0869::        refIdxB = vi.refIdx[Y];
+derive_spatial_luma_vector_prediction::172::64.1824::      }
+derive_spatial_luma_vector_prediction::173::49.5846::    }
+derive_spatial_luma_vector_prediction::174::36.1761::  }
+derive_spatial_luma_vector_prediction::175::70.1425::  // 4.
+derive_spatial_luma_vector_prediction::176::270.6449::  if (isScaledFlagLX==0 &&      // no A predictor,
+derive_spatial_luma_vector_prediction::177::280.2277::      out_availableFlagLXN[B])  // but an unscaled B predictor
+derive_spatial_luma_vector_prediction::178::49.4289::    {
+derive_spatial_luma_vector_prediction::179::174.5943::      // use unscaled B predictor as A predictor
+derive_spatial_luma_vector_prediction::180::319.5601::      logtrace(LogMotion,"copy the same-POC B candidate as additional A candidate\n");
+derive_spatial_luma_vector_prediction::181::201.9365::      out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::182::290.1046::      out_mvLXN[A] = out_mvLXN[B];
+derive_spatial_luma_vector_prediction::183::169.0408::      refIdxA = refIdxB;
+derive_spatial_luma_vector_prediction::184::48.8800::    }
+derive_spatial_luma_vector_prediction::185::66.4957::  // 5.
+derive_spatial_luma_vector_prediction::186::284.7872::  // If no A predictor, we output the unscaled B as the A predictor (above)
+derive_spatial_luma_vector_prediction::187::162.5421::  // and also add a scaled B predictor here.
+derive_spatial_luma_vector_prediction::188::308.5720::  // If there is (probably) an A predictor, no differing-POC B predictor is generated.
+derive_spatial_luma_vector_prediction::189::168.0505::  if (isScaledFlagLX==0) {
+derive_spatial_luma_vector_prediction::190::182.9907::    out_availableFlagLXN[B]=0;
+derive_spatial_luma_vector_prediction::191::384.1252::    for (int k=0 ; k<=2 && out_availableFlagLXN[B]==0 ; k++) {
+derive_spatial_luma_vector_prediction::192::147.5238::      int refPicList=-1;
+derive_spatial_luma_vector_prediction::193::160.9897::      if (availableB[k]) {
+derive_spatial_luma_vector_prediction::194::161.2850::        int Y=1-X;
+derive_spatial_luma_vector_prediction::195::416.3957::        const PBMotion& vi = img->get_mv_info(xB[k],yB[k]);
+derive_spatial_luma_vector_prediction::196::231.5140::        if (vi.predFlag[X]==1 &&
+derive_spatial_luma_vector_prediction::197::509.9434::            shdr->LongTermRefPic[X][refIdxLX] == shdr->LongTermRefPic[X][ vi.refIdx[X] ]) {
+derive_spatial_luma_vector_prediction::199::350.5247::          out_mvLXN[B] = vi.mv[X];
+derive_spatial_luma_vector_prediction::200::278.2262::          refIdxB = vi.refIdx[X];
+derive_spatial_luma_vector_prediction::201::180.2832::          refPicList = X;
+derive_spatial_luma_vector_prediction::202::84.7644::        }
+derive_spatial_luma_vector_prediction::203::267.2037::        else if (vi.predFlag[Y]==1 &&
+derive_spatial_luma_vector_prediction::204::639.2736::                 shdr->LongTermRefPic[X][refIdxLX] == shdr->LongTermRefPic[Y][ vi.refIdx[Y] ]) {
+derive_spatial_luma_vector_prediction::205::238.0892::          out_availableFlagLXN[B]=1;
+derive_spatial_luma_vector_prediction::206::320.1728::          out_mvLXN[B] = vi.mv[Y];
+derive_spatial_luma_vector_prediction::207::261.3892::          refIdxB = vi.refIdx[Y];
+derive_spatial_luma_vector_prediction::208::170.6381::          refPicList = Y;
+derive_spatial_luma_vector_prediction::209::83.1768::        }
+derive_spatial_luma_vector_prediction::210::69.7717::      }
+derive_spatial_luma_vector_prediction::211::259.3270::      if (out_availableFlagLXN[B]==1) {
+derive_spatial_luma_vector_prediction::212::195.3437::        if (refIdxB<0) {
+derive_spatial_luma_vector_prediction::213::384.1280::          out_availableFlagLXN[0] = out_availableFlagLXN[1] = false;
+derive_spatial_luma_vector_prediction::214::151.5025::          return; // error
+derive_spatial_luma_vector_prediction::215::82.3149::        }
+derive_spatial_luma_vector_prediction::216::202.8691::        assert(refPicList>=0);
+derive_spatial_luma_vector_prediction::217::209.8304::        assert(refIdxB>=0);
+derive_spatial_luma_vector_prediction::218::543.4222::        const de265_image* refPicB=ctx->get_image(shdr->RefPicList[refPicList][refIdxB ]);
+derive_spatial_luma_vector_prediction::219::582.1950::        const de265_image* refPicX=ctx->get_image(shdr->RefPicList[X         ][refIdxLX]);
+derive_spatial_luma_vector_prediction::220::381.2166::        int isLongTermB = shdr->LongTermRefPic[refPicList][refIdxB ];
+derive_spatial_luma_vector_prediction::221::445.4065::        int isLongTermX = shdr->LongTermRefPic[X         ][refIdxLX];
+derive_spatial_luma_vector_prediction::222::292.4482::        if (refPicB==NULL || refPicX==NULL) {
+derive_spatial_luma_vector_prediction::223::567.4090::          img->decctx->add_warning(DE265_WARNING_NONEXISTING_REFERENCE_PICTURE_ACCESSED,false);
+derive_spatial_luma_vector_prediction::224::326.5182::          img->integrity = INTEGRITY_DECODING_ERRORS;
+derive_spatial_luma_vector_prediction::225::81.5453::        }
+derive_spatial_luma_vector_prediction::226::370.4783::        else if (refPicB->PicOrderCntVal != refPicX->PicOrderCntVal &&
+derive_spatial_luma_vector_prediction::227::302.8633::                 !isLongTermB && !isLongTermX) {
+derive_spatial_luma_vector_prediction::228::379.0723::          int distB = img->PicOrderCntVal - refPicB->PicOrderCntVal;
+derive_spatial_luma_vector_prediction::229::314.7558::          int distX = img->PicOrderCntVal - referenced_POC;
+derive_spatial_luma_vector_prediction::230::702.1458::          logtrace(LogMotion,"scale MVP B: B-POC:%d X-POC:%d\n",refPicB->PicOrderCntVal,refPicX->PicOrderCntVal);
+derive_spatial_luma_vector_prediction::231::516.0815::          if (!scale_mv(&out_mvLXN[B], out_mvLXN[B], distB, distX)) {
+derive_spatial_luma_vector_prediction::232::517.6472::            ctx->add_warning(DE265_WARNING_INCORRECT_MOTION_VECTOR_SCALING, false);
+derive_spatial_luma_vector_prediction::233::348.0003::            img->integrity = INTEGRITY_DECODING_ERRORS;
+derive_spatial_luma_vector_prediction::234::96.3086::          }
+derive_spatial_luma_vector_prediction::235::83.4655::        }
+derive_spatial_luma_vector_prediction::236::64.5015::      }
+derive_spatial_luma_vector_prediction::237::48.9433::    }
+derive_spatial_luma_vector_prediction::238::34.1502::  }
+derive_spatial_luma_vector_prediction::239::12.3791::}
+compute_candidates::1::119.4581::void compute_candidates(
+compute_candidates::2::200.0567::    poi_t *p_poi_list,
+compute_candidates::3::195.0449::    addrtree_node_t *p_candidates
+compute_candidates::4::33.6997::)
+compute_candidates::5::33.3258::{
+compute_candidates::6::146.1955::    poi_t *poi;
+compute_candidates::7::96.0046::    unsigned int cursor;
+compute_candidates::8::127.1122::    uint64_t delta;
+compute_candidates::9::124.5462::    uint64_t v;
+compute_candidates::10::152.9931::    uint64_t freespace;
+compute_candidates::11::81.8564::    int count;
+compute_candidates::12::234.8857::    uint64_t max_address = 0xFFFFFFFFFFFFFFFF;
+compute_candidates::13::132.8998::    int i,j,z;
+compute_candidates::14::150.3068::    int nb_candidates = 0;
+compute_candidates::15::103.7818::    unsigned int memsize;
+compute_candidates::16::169.0826::    score_entry_t *p_scores;
+compute_candidates::17::188.9108::    pthread_t *p_threads = NULL;
+compute_candidates::18::222.4589::    parallel_params_t *p_threads_params = NULL;
+compute_candidates::19::151.3436::    int b_has_str = 0;
+compute_candidates::20::218.8510::    poi = p_poi_list->p_next;
+compute_candidates::21::138.6755::    while (poi != NULL)
+compute_candidates::22::52.5571::    {
+compute_candidates::23::341.6998::        if ((poi->type == POI_STRING) && !b_has_str)
+compute_candidates::24::80.6899::        {
+compute_candidates::25::195.4537::            b_has_str = 1;
+compute_candidates::26::80.5620::        }
+compute_candidates::27::206.6353::        poi = poi->p_next;
+compute_candidates::28::147.1554::        nb_candidates++;
+compute_candidates::29::52.0868::    }
+compute_candidates::30::95.0959::    i = 0;
+compute_candidates::31::221.8153::    poi = p_poi_list->p_next;
+compute_candidates::32::144.7396::    if (poi != NULL)
+compute_candidates::33::52.3962::    {
+compute_candidates::34::186.1575::        while ((poi != NULL))
+compute_candidates::35::81.7370::        {
+compute_candidates::36::348.2424::            progress_bar(i, nb_candidates, "Analyzing ...");
+compute_candidates::37::559.0325::            for (cursor=0; cursor<g_content_size; cursor+=((g_target_arch==ARCH_32)?4:8))
+compute_candidates::38::111.1291::            {
+compute_candidates::39::13.5143::                v = read_pointer(g_target_arch, g_target_endian, gp_content, cursor);
+compute_candidates::40::371.1565::                /* Candidate pointer must not be made of ASCII. */
+compute_candidates::41::430.2658::                /* Add heuristic because pointer should be aligned on 4bytes/8bytes 
+compute_candidates::42::448.9453::                 * if v % get_arch_pointer_size(arch) != 0 --> not aligned 
+compute_candidates::43::176.3629::                 * */
+compute_candidates::44::560.2426::                if ((v & g_mem_alignment_mask) == (poi->offset & g_mem_alignment_mask) && 
+compute_candidates::45::442.5702::                    !is_ascii_ptr(v, g_target_arch) && 
+compute_candidates::46::375.1840::                    is_ptr_aligned(v,g_target_arch))
+compute_candidates::47::149.6078::                {
+compute_candidates::48::461.3321::                    /* If PoI is a string, we expect a pointer on its first character. */
+compute_candidates::49::890.0576::                    if ( ((b_has_str == 1) && (poi->type == POI_STRING)) || ((b_has_str == 0) && (poi->type == POI_FUNCTION)) )
+compute_candidates::50::797.3053::                    //if ( ((b_has_str == 1) && (poi->type == POI_STRING)) || (poi->type == POI_FUNCTION) )
+compute_candidates::51::187.1931::                    {
+compute_candidates::52::359.8845::                        if (v>=poi->offset)
+compute_candidates::53::191.8701::                        {
+compute_candidates::54::450.6942::                            delta = (v - poi->offset);
+compute_candidates::55::884.1370::                            freespace = ( ((g_target_arch==ARCH_32)?0xffffffff:0xffffffffffffffff) - delta) + 1;
+compute_candidates::56::438.3932::                            if (freespace >= g_content_size)
+compute_candidates::57::255.4247::                            {
+compute_candidates::58::399.9975::                                /* register candidate. */
+compute_candidates::59::668.0603::                                addrtree_register_address(p_candidates, (uint64_t)delta);
+compute_candidates::60::251.7533::                            }
+compute_candidates::61::222.6444::                        }
+compute_candidates::62::192.8848::                    }
+compute_candidates::63::160.5118::                }
+compute_candidates::64::124.9345::            }
+compute_candidates::65::342.9607::            /* Does the memory used exceed our limited space ? */
+compute_candidates::66::431.2785::            memsize = addrtree_get_memsize(p_candidates);
+compute_candidates::67::334.9340::            if (memsize>MAX_MEM_AMOUNT)
+compute_candidates::68::129.9461::            {
+compute_candidates::69::425.0841::                memsize = addrtree_get_memsize(p_candidates);
+compute_candidates::70::517.7932::                info("[mem] Memory tree is too big (%d bytes), reducing...\r\n", memsize);
+compute_candidates::71::386.0165::                max_votes = addrtree_max_vote(p_candidates);
+compute_candidates::72::404.3957::                addrtree_filter(p_candidates, max_votes/2);   
+compute_candidates::73::383.7360::                memsize = addrtree_get_memsize(p_candidates);
+compute_candidates::74::407.1469::                info("[mem] Memory tree reduced to %d bytes\r\n", memsize);
+compute_candidates::75::115.7695::            }
+compute_candidates::76::244.5346::            poi = poi->p_next;
+compute_candidates::77::135.5474::            i++;
+compute_candidates::78::84.0727::        }
+compute_candidates::79::159.9019::        progress_bar_done();
+compute_candidates::80::247.8679::        /* Loop on candidates, keep the best one. */
+compute_candidates::81::186.4807::        g_bm_votes = -1;
+compute_candidates::82::196.7611::        g_bm_total_votes = 0;
+compute_candidates::83::172.1345::        g_bm_count=0;
+compute_candidates::84::354.1133::        addrtree_browse(p_candidates, find_best_match, 0);
+compute_candidates::85::373.8572::        logm("[i] Found %d base addresses to test\n", g_bm_count);
+compute_candidates::86::98.2313::        /*
+compute_candidates::87::255.6565::         * Best match address corresponds to the address for which we identified
+compute_candidates::88::299.2051::         * the biggest numbers of alleged pointers. The best match is not always
+compute_candidates::89::329.3143::         * the correct base address, so we just display it here and try to assess
+compute_candidates::90::254.9821::         * other candidates in case we missed the correct base address.
+compute_candidates::91::97.8910::         */
+compute_candidates::92::267.6683::        gp_ba_candidates = (base_address_candidate *)malloc(sizeof(base_address_candidate) * g_bm_count);
+compute_candidates::93::257.9983::        if (gp_ba_candidates != NULL)
+compute_candidates::94::90.8645::        {
+compute_candidates::95::359.3020::            max_votes = addrtree_max_vote(p_candidates);
+compute_candidates::96::217.5377::            g_bm_kept = 0;
+compute_candidates::97::257.0464::            gp_ba_candidates_index = 0;
+compute_candidates::98::401.4147::            addrtree_browse(p_candidates, fill_best_matches, 0);
+compute_candidates::99::221.5223::            info("tree browsed\n");
+compute_candidates::100::266.8933::            if (g_target_arch == ARCH_64)
+compute_candidates::101::556.3418::                info("Best match for base address is %016lx (%d votes)\n", g_bm_address, g_bm_votes);
+compute_candidates::102::116.3980::            else
+compute_candidates::103::534.6783::                info("Best match for base address is %08x (%d votes)\n", g_bm_address, g_bm_votes);
+compute_candidates::104::195.1041::            /* Sort candidates array. */
+compute_candidates::105::547.9604::            qsort(gp_ba_candidates, g_bm_count, sizeof(base_address_candidate), candidate_compare_func);
+compute_candidates::106::369.3596::            debug("Found %d candidates !\n", gp_ba_candidates_index);
+compute_candidates::107::383.9564::            for (i=0; i<gp_ba_candidates_index; i++)
+compute_candidates::108::115.8476::            {
+compute_candidates::109::837.6441::                debug("Found candidate address %016lx (votes: %d, position: %d)\n", gp_ba_candidates[i].address, gp_ba_candidates[i].votes, i+1);
+compute_candidates::110::114.2636::            }
+compute_candidates::111::134.9592::            if (!g_deepmode)
+compute_candidates::113::534.4821::                for (i=max_votes;i>=0;i--)
+compute_candidates::114::177.0377::                {
+compute_candidates::115::343.8321::                    g_bm_kept = 0;
+compute_candidates::116::521.2549::                    for (j=0;j<g_bm_count;j++)
+compute_candidates::117::201.6758::                    {
+compute_candidates::118::492.9790::                        if (gp_ba_candidates[j].votes >= i)
+compute_candidates::119::242.2797::                        {
+compute_candidates::120::377.8985::                            g_bm_kept++;
+compute_candidates::121::235.4446::                        }
+compute_candidates::122::198.9693::                    }
+compute_candidates::123::372.2316::                    if (g_bm_kept>=30)
+compute_candidates::124::204.7925::                    {
+compute_candidates::125::373.5859::                        max_votes = i+1;
+compute_candidates::126::277.6299::                        break;
+compute_candidates::127::205.0152::                    }
+compute_candidates::128::173.7680::                }
+compute_candidates::129::141.7870::            }
+compute_candidates::130::143.1487::            else
+compute_candidates::131::141.6301::            {
+compute_candidates::132::448.6540::                g_bm_kept = gp_ba_candidates_index;
+compute_candidates::133::118.4992::                max_votes = 0;
+compute_candidates::134::223.3545::            }            
+compute_candidates::135::507.0530::            info("Keep %d candidates with max vote=%d\n", g_bm_kept, max_votes);
+compute_candidates::136::138.4861::            /*
+compute_candidates::137::313.6420::             * Loop on candidate base addresses and check if arrays of values may
+compute_candidates::138::325.6885::             * point to known point of interests (text strings or other arrays).
+compute_candidates::139::132.8885::             * 
+compute_candidates::140::322.8318::             * This method gives good results when at least one array contains a
+compute_candidates::141::238.1838::             * list of pointers to text strings.
+compute_candidates::142::131.6328::             */
+compute_candidates::143::274.5800::            /* Allocate memory for our score table. */
+compute_candidates::144::551.5130::            p_scores = (score_entry_t*)malloc(sizeof(score_entry_t) * g_bm_kept);
+compute_candidates::145::161.6787::            z=0;
+compute_candidates::146::234.2716::            if (p_scores != NULL)
+compute_candidates::147::114.8529::            {
+compute_candidates::148::502.6000::                memset(p_scores, 0, sizeof(score_entry_t)*g_bm_kept);
+compute_candidates::149::383.6968::                /* Compute the number of candidates each thread is going to check. */
+compute_candidates::150::345.8688::                z = g_bm_kept / g_nb_threads;
+compute_candidates::151::345.2003::                /* Allocate some space to store the threads id. */
+compute_candidates::152::544.8922::                p_threads = (pthread_t *)malloc(sizeof(pthread_t) * g_nb_threads);
+compute_candidates::153::726.9273::                p_threads_params = (parallel_params_t *)malloc(sizeof(parallel_params_t) * g_nb_threads);
+compute_candidates::154::470.2502::                if ((p_threads != NULL) && (p_threads_params != NULL))
+compute_candidates::155::147.9779::                {
+compute_candidates::156::550.0946::                    memset(p_threads, 0, sizeof(pthread_t) * g_nb_threads);
+compute_candidates::157::619.0482::                    memset(p_threads_params, 0, sizeof(parallel_params_t) * g_nb_threads);
+compute_candidates::158::298.0390::                    g_bm_processed = 0;
+compute_candidates::159::423.7026::                    info("Starting %d threads ...\n", g_nb_threads);
+compute_candidates::160::341.1245::                    /* Create `g_nb_threads`. */
+compute_candidates::161::437.5537::                    for (i=0; i<g_nb_threads; i++)
+compute_candidates::162::184.0810::                    {
+compute_candidates::163::483.3433::                        p_threads_params[i].p_scores = p_scores;
+compute_candidates::164::548.2199::                        p_threads_params[i].p_poi_list = p_poi_list;
+compute_candidates::165::459.6764::                        p_threads_params[i].p_candidates = p_candidates;
+compute_candidates::166::538.5135::                        p_threads_params[i].arch = g_target_arch;
+compute_candidates::167::543.4697::                        p_threads_params[i].endian = g_target_endian;
+compute_candidates::168::461.7510::                        p_threads_params[i].content = gp_content;
+compute_candidates::169::549.7848::                        p_threads_params[i].ui_content_size = g_content_size;
+compute_candidates::170::476.6974::                        p_threads_params[i].lock = &deep_lock;
+compute_candidates::171::463.3126::                        p_threads_params[i].start = i*z;
+compute_candidates::172::421.7335::                        p_threads_params[i].count = z;
+compute_candidates::173::440.2706::                        if (i == (g_nb_threads - 1))
+compute_candidates::174::227.5212::                        {
+compute_candidates::175::518.0968::                            if ((i*z + z) < g_bm_kept)
+compute_candidates::176::268.6962::                            {
+compute_candidates::177::794.8373::                                p_threads_params[i].count = g_bm_kept -   p_threads_params[i].start;
+compute_candidates::178::240.2217::                            }
+compute_candidates::179::244.0601::                        }
+compute_candidates::180::1148.6722::                        info("Thread #%d will cover %d to %d\n", i, p_threads_params[i].start, p_threads_params[i].start+p_threads_params[i].count);
+compute_candidates::181::308.0058::                        pthread_create(
+compute_candidates::182::379.9752::                            &p_threads[i],
+compute_candidates::183::302.5558::                            NULL,
+compute_candidates::184::384.3703::                            parallel_refine_candidates,
+compute_candidates::185::485.7870::                            (void *)&p_threads_params[i]
+compute_candidates::186::232.7768::                        );
+compute_candidates::187::188.0028::                    }
+compute_candidates::188::390.8441::                    /* Wait for these threads to finish. */
+compute_candidates::189::498.0531::                    for (i=0; i<g_nb_threads; i++)
+compute_candidates::190::196.9986::                    {
+compute_candidates::191::506.4117::                        pthread_join(p_threads[i], NULL);
+compute_candidates::192::195.5263::                    }
+compute_candidates::193::306.0726::                    progress_bar_done();
+compute_candidates::194::171.9416::                    max_address = g_max_address;
+compute_candidates::195::369.4427::                    /* Free pthreads. */
+compute_candidates::196::329.5096::                    free(p_threads);
+compute_candidates::197::348.6776::                    free(p_threads_params);
+compute_candidates::198::163.9911::                }
+compute_candidates::199::164.9054::                else
+compute_candidates::200::163.5907::                {
+compute_candidates::201::451.3418::                    error("Cannot allocate memory for multi-threaded search.");
+compute_candidates::202::160.3268::                }
+compute_candidates::203::499.8896::                info("Best match based on pointers count: %016lx\n", max_address);
+compute_candidates::204::391.6694::                /* Check if we have a single candidate with valid array. */
+compute_candidates::205::209.1476::                count = 0;
+compute_candidates::206::426.6831::                for (i=0; i<g_bm_kept; i++)
+compute_candidates::207::158.0412::                {
+compute_candidates::208::464.3743::                    if (p_scores[i].has_valid_array > 0)
+compute_candidates::209::196.8852::                    {
+compute_candidates::210::270.3919::                        count++;
+compute_candidates::211::197.0369::                    }
+compute_candidates::212::169.2236::                }
+compute_candidates::213::272.5481::                if (count == 1)
+compute_candidates::214::162.9337::                {
+compute_candidates::215::371.5960::                    for (i=0; i<g_bm_kept; i++)
+compute_candidates::216::217.9393::                    {
+compute_candidates::217::541.0117::                        if (p_scores[i].has_valid_array > 0)
+compute_candidates::218::238.4014::                        {
+compute_candidates::219::514.5494::                            max_address = p_scores[i].base_address;
+compute_candidates::220::290.0705::                            break;
+compute_candidates::221::229.1822::                        }
+compute_candidates::222::201.1554::                    }
+compute_candidates::223::346.1169::                    /* Display 100% matching address. */
+compute_candidates::224::375.7148::                    if (g_target_arch == ARCH_64)
+compute_candidates::225::666.6891::                        printf("[i] Base address found (valid array): 0x%016lx.\n", max_address);
+compute_candidates::226::194.2751::                    else
+compute_candidates::227::797.0832::                        printf("[i] Base address found (valid array): 0x%08x.\n", (uint32_t)max_address);
+compute_candidates::228::160.6448::                }
+compute_candidates::229::167.7816::                else
+compute_candidates::230::168.5700::                {
+compute_candidates::231::463.1350::                    /* Check if g_bm_address == max_address. */
+compute_candidates::232::363.7175::                    if (g_bm_address == max_address)
+compute_candidates::233::206.8730::                    {
+compute_candidates::234::403.2153::                        /* Display 100% matching address. */
+compute_candidates::235::419.7913::                        if (g_target_arch == ARCH_64)
+compute_candidates::236::685.4150::                            printf("[i] Base address found: 0x%016lx.\n", g_bm_address);
+compute_candidates::237::218.2642::                        else
+compute_candidates::238::770.9865::                            printf("[i] Base address found: 0x%08x.\n", (uint32_t)g_bm_address);
+compute_candidates::239::186.6045::                    }
+compute_candidates::240::406.3215::                    else if (max_address != 0xFFFFFFFFFFFFFFFF)
+compute_candidates::241::209.7231::                    {   
+compute_candidates::242::403.9929::                        if (g_target_arch == ARCH_64)
+compute_candidates::243::730.1940::                            printf("[i] Base address seems to be 0x%016lx (not sure).\n", max_address);
+compute_candidates::244::226.4148::                        else
+compute_candidates::245::837.6876::                            printf("[i] Base address seems to be 0x%08x (not sure).\n", (uint32_t)max_address);
+compute_candidates::246::194.9353::                    }
+compute_candidates::247::52.2629::                    else
+compute_candidates::248::202.1177::                    {
+compute_candidates::249::412.3021::                        if (g_target_arch == ARCH_64)
+compute_candidates::250::734.5150::                            printf("[i] Base address seems to be 0x%016lx (not sure).\n", g_bm_address);
+compute_candidates::251::218.7441::                        else
+compute_candidates::252::796.6873::                            printf("[i] Base address seems to be 0x%08x (not sure).\n", (uint32_t)g_bm_address);
+compute_candidates::253::180.5925::                    }
+compute_candidates::254::152.3548::                }
+compute_candidates::255::250.7069::                /* Sort remaining candidates. */
+compute_candidates::256::575.0845::                qsort(p_scores, g_bm_kept, sizeof(score_entry_t), score_compare_func);
+compute_candidates::257::493.2864::                /* Tell the user he/she should use the -m/--more to get all the candidates. */
+compute_candidates::258::425.0822::                if ((nb_candidates > 0) && (g_bm_kept > 1))
+compute_candidates::259::154.4650::                {
+compute_candidates::260::455.8667::                    printf(" More base addresses to consider (just in case):\n");
+compute_candidates::261::633.1733::                    for (i=0; i<((g_bm_kept>30)?30:g_bm_kept); i++)
+compute_candidates::262::160.9353::                    {
+compute_candidates::263::756.1221::                        if ((p_scores[i].base_address != max_address) && (p_scores[i].score > 0))
+compute_candidates::264::223.0354::                        {
+compute_candidates::265::432.8214::                            if (g_target_arch == ARCH_64)
+compute_candidates::266::1046.4387::                                printf("  0x%016lx (%f)\n", p_scores[i].base_address, (float)p_scores[i].score/p_scores[0].score);
+compute_candidates::267::251.9628::                            else
+compute_candidates::268::1116.0314::                                printf("  0x%08x (%.02f)\n", (uint32_t)p_scores[i].base_address, (float)p_scores[i].score/p_scores[0].score);
+compute_candidates::269::215.2139::                        }
+compute_candidates::270::187.4942::                    }
+compute_candidates::271::160.1411::                }
+compute_candidates::272::127.1676::            }
+compute_candidates::273::132.5635::            else
+compute_candidates::274::126.5582::            {
+compute_candidates::275::380.3451::                error("Cannot evaluate, low memory !\n");
+compute_candidates::276::126.3684::            }
+compute_candidates::277::234.6037::            /* Free scores. */
+compute_candidates::278::239.4672::            free(p_scores);
+compute_candidates::279::92.3881::        }
+compute_candidates::280::59.9701::    }
+compute_candidates::281::40.2582::    else
+compute_candidates::282::255.9803::        error("No point of interests found, cannot deduce loading address.");
+compute_candidates::283::10.2218::}
+Msg::1::78.7717::void  Msg() {
+Msg::2::408.1648::	MessageBoxA(NULL, "嘿嘿！", "堆栈溢出测试", 0);
+Msg::3::10.4084::}
+Add::1::139.8650::int  Add(int a, int b) {
+Add::2::95.6055::	int* p = &a;
+Add::3::150.6759::	*(p-1) = (int)Msg;
+Add::4::69.2367::	return a + b;
+Add::5::10.2770::}
+main::1::54.6297::void main() {
+main::2::138.8641::	printf("%d", Add(1, 2));
+main::3::59.6045::	system("pause");
+main::4::35.3849::	return;
+main::5::10.1404::}
+derive_spatial_luma_vector_prediction::1::230.1341::// 8.5.3.1.6
+derive_spatial_luma_vector_prediction::2::431.3482::void derive_spatial_luma_vector_prediction(base_context* ctx,
+derive_spatial_luma_vector_prediction::3::493.5695::                                           de265_image* img,
+derive_spatial_luma_vector_prediction::4::531.9108::                                           const slice_segment_header* shdr,
+derive_spatial_luma_vector_prediction::5::689.5804::                                           int xC,int yC,int nCS,int xP,int yP,
+derive_spatial_luma_vector_prediction::6::594.9593::                                           int nPbW,int nPbH, int X,
+derive_spatial_luma_vector_prediction::7::537.1721::                                           int refIdxLX, int partIdx,
+derive_spatial_luma_vector_prediction::8::595.5970::                                           uint8_t out_availableFlagLXN[2],
+derive_spatial_luma_vector_prediction::9::544.6716::                                           MotionVector out_mvLXN[2])
+derive_spatial_luma_vector_prediction::10::39.6299::{
+derive_spatial_luma_vector_prediction::11::301.2087::  if (refIdxLX >= MAX_NUM_REF_PICS) {
+derive_spatial_luma_vector_prediction::12::532.1599::    ctx->add_warning(DE265_WARNING_INCORRECT_MOTION_VECTOR_SCALING, false);
+derive_spatial_luma_vector_prediction::13::340.5375::    img->integrity = INTEGRITY_DECODING_ERRORS;
+derive_spatial_luma_vector_prediction::14::92.1616::    out_availableFlagLXN[0] = false;
+derive_spatial_luma_vector_prediction::15::202.5281::    out_availableFlagLXN[1] = false;
+derive_spatial_luma_vector_prediction::16::221.1711::    out_mvLXN[0] = MotionVector{};
+derive_spatial_luma_vector_prediction::17::217.5882::    out_mvLXN[1] = MotionVector{};
+derive_spatial_luma_vector_prediction::18::64.8187::    return;
+derive_spatial_luma_vector_prediction::19::34.8934::  }
+derive_spatial_luma_vector_prediction::20::144.6198::  int isScaledFlagLX = 0;
+derive_spatial_luma_vector_prediction::21::97.8417::  const int A=0;
+derive_spatial_luma_vector_prediction::22::97.2986::  const int B=1;
+derive_spatial_luma_vector_prediction::23::169.4641::  out_availableFlagLXN[A] = 0;
+derive_spatial_luma_vector_prediction::24::170.4811::  out_availableFlagLXN[B] = 0;
+derive_spatial_luma_vector_prediction::25::74.3089::  // --- A ---
+derive_spatial_luma_vector_prediction::26::61.9744::  // 1.
+derive_spatial_luma_vector_prediction::27::155.8167::  int xA[2], yA[2];
+derive_spatial_luma_vector_prediction::28::148.9188::  xA[0] = xP-1;
+derive_spatial_luma_vector_prediction::29::176.0562::  yA[0] = yP + nPbH;
+derive_spatial_luma_vector_prediction::30::153.7812::  xA[1] = xA[0];
+derive_spatial_luma_vector_prediction::31::177.5799::  yA[1] = yA[0]-1;
+derive_spatial_luma_vector_prediction::32::59.3073::  // 2.
+derive_spatial_luma_vector_prediction::33::168.2144::  out_availableFlagLXN[A] = 0;
+derive_spatial_luma_vector_prediction::34::180.2883::  out_mvLXN[A].x = 0;
+derive_spatial_luma_vector_prediction::35::185.5391::  out_mvLXN[A].y = 0;
+derive_spatial_luma_vector_prediction::36::97.2497::  // 3. / 4.
+derive_spatial_luma_vector_prediction::37::99.0050::  bool availableA[2];
+derive_spatial_luma_vector_prediction::38::644.4591::  availableA[0] = img->available_pred_blk(xC,yC, nCS, xP,yP, nPbW,nPbH,partIdx, xA[0],yA[0]);
+derive_spatial_luma_vector_prediction::39::655.7600::  availableA[1] = img->available_pred_blk(xC,yC, nCS, xP,yP, nPbW,nPbH,partIdx, xA[1],yA[1]);
+derive_spatial_luma_vector_prediction::40::62.7414::  // 5.
+derive_spatial_luma_vector_prediction::41::199.4772::  if (availableA[0] || availableA[1]) {
+derive_spatial_luma_vector_prediction::42::142.9057::    isScaledFlagLX = 1;
+derive_spatial_luma_vector_prediction::43::35.8248::  }
+derive_spatial_luma_vector_prediction::44::187.6632::  // 6.  test A0 and A1  (Ak)
+derive_spatial_luma_vector_prediction::45::122.8423::  int refIdxA=-1;
+derive_spatial_luma_vector_prediction::46::165.8008::  // the POC we want to reference in this PB
+derive_spatial_luma_vector_prediction::47::414.5409::  const de265_image* tmpimg = ctx->get_image(shdr->RefPicList[X][ refIdxLX ]);
+derive_spatial_luma_vector_prediction::48::170.4601::  if (tmpimg==NULL) { return; }
+derive_spatial_luma_vector_prediction::49::44.9284::  const int referenced_POC = tmpimg->PicOrderCntVal;
+derive_spatial_luma_vector_prediction::51::151.1843::    if (availableA[k] &&
+derive_spatial_luma_vector_prediction::52::377.4350::        out_availableFlagLXN[A]==0 && // no A?-predictor so far
+derive_spatial_luma_vector_prediction::53::407.4319::        img->get_pred_mode(xA[k],yA[k]) != MODE_INTRA) {
+derive_spatial_luma_vector_prediction::54::142.5447::      int Y=1-X;
+derive_spatial_luma_vector_prediction::55::381.2228::      const PBMotion& vi = img->get_mv_info(xA[k],yA[k]);
+derive_spatial_luma_vector_prediction::56::260.0481::      logtrace(LogMotion,"MVP A%d=\n",k);
+derive_spatial_luma_vector_prediction::57::141.3833::      logmvcand(vi);
+derive_spatial_luma_vector_prediction::58::191.9453::      const de265_image* imgX = NULL;
+derive_spatial_luma_vector_prediction::59::524.1889::      if (vi.predFlag[X]) imgX = ctx->get_image(shdr->RefPicList[X][ vi.refIdx[X] ]);
+derive_spatial_luma_vector_prediction::60::196.6299::      const de265_image* imgY = NULL;
+derive_spatial_luma_vector_prediction::61::539.1241::      if (vi.predFlag[Y]) imgY = ctx->get_image(shdr->RefPicList[Y][ vi.refIdx[Y] ]);
+derive_spatial_luma_vector_prediction::62::234.8116::      // check whether the predictor X is available and references the same POC
+derive_spatial_luma_vector_prediction::63::399.5859::      if (vi.predFlag[X] && imgX && imgX->PicOrderCntVal == referenced_POC) {
+derive_spatial_luma_vector_prediction::64::420.3488::        logtrace(LogMotion,"take A%d/L%d as A candidate with same POC\n",k,X);
+derive_spatial_luma_vector_prediction::65::219.7479::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::66::288.7475::        out_mvLXN[A] = vi.mv[X];
+derive_spatial_luma_vector_prediction::67::234.2914::        refIdxA = vi.refIdx[X];
+derive_spatial_luma_vector_prediction::68::64.9098::      }
+derive_spatial_luma_vector_prediction::69::285.0236::      // check whether the other predictor (Y) is available and references the same POC
+derive_spatial_luma_vector_prediction::70::423.2102::      else if (vi.predFlag[Y] && imgY && imgY->PicOrderCntVal == referenced_POC) {
+derive_spatial_luma_vector_prediction::71::458.6632::        logtrace(LogMotion,"take A%d/L%d as A candidate with same POC\n",k,Y);
+derive_spatial_luma_vector_prediction::72::226.0326::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::73::290.3179::        out_mvLXN[A] = vi.mv[Y];
+derive_spatial_luma_vector_prediction::74::228.4218::        refIdxA = vi.refIdx[Y];
+derive_spatial_luma_vector_prediction::75::62.9539::      }
+derive_spatial_luma_vector_prediction::76::47.7499::    }
+derive_spatial_luma_vector_prediction::77::36.2193::  }
+derive_spatial_luma_vector_prediction::78::301.8848::  // 7. If there is no predictor referencing the same POC, we take any other reference as
+derive_spatial_luma_vector_prediction::79::289.9316::  //    long as it is the same type of reference (long-term / short-term)
+derive_spatial_luma_vector_prediction::80::364.8517::  for (int k=0 ; k<=1 && out_availableFlagLXN[A]==0 ; k++) {
+derive_spatial_luma_vector_prediction::81::128.0671::    int refPicList=-1;
+derive_spatial_luma_vector_prediction::82::136.2762::    if (availableA[k] &&
+derive_spatial_luma_vector_prediction::83::318.8507::        // TODO: we could remove this call by storing the result of the similar computation above
+derive_spatial_luma_vector_prediction::84::399.5252::        img->get_pred_mode(xA[k],yA[k]) != MODE_INTRA) {
+derive_spatial_luma_vector_prediction::85::141.6382::      int Y=1-X;
+derive_spatial_luma_vector_prediction::86::381.9064::      const PBMotion& vi = img->get_mv_info(xA[k],yA[k]);
+derive_spatial_luma_vector_prediction::87::210.3310::      if (vi.predFlag[X]==1 &&
+derive_spatial_luma_vector_prediction::88::556.2764::          shdr->LongTermRefPic[X][refIdxLX] == shdr->LongTermRefPic[X][ vi.refIdx[X] ]) {
+derive_spatial_luma_vector_prediction::89::446.8063::        logtrace(LogMotion,"take A%D/L%d as A candidate with different POCs\n",k,X);
+derive_spatial_luma_vector_prediction::90::231.6211::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::91::297.6886::        out_mvLXN[A] = vi.mv[X];
+derive_spatial_luma_vector_prediction::92::245.1558::        refIdxA = vi.refIdx[X];
+derive_spatial_luma_vector_prediction::93::154.9092::        refPicList = X;
+derive_spatial_luma_vector_prediction::94::33.4300::      }
+derive_spatial_luma_vector_prediction::96::655.3190::               shdr->LongTermRefPic[X][refIdxLX] == shdr->LongTermRefPic[Y][ vi.refIdx[Y] ]) {
+derive_spatial_luma_vector_prediction::97::457.5874::        logtrace(LogMotion,"take A%d/L%d as A candidate with different POCs\n",k,Y);
+derive_spatial_luma_vector_prediction::98::221.5365::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::99::296.0308::        out_mvLXN[A] = vi.mv[Y];
+derive_spatial_luma_vector_prediction::100::236.2637::        refIdxA = vi.refIdx[Y];
+derive_spatial_luma_vector_prediction::101::146.7216::        refPicList = Y;
+derive_spatial_luma_vector_prediction::102::64.7599::      }
+derive_spatial_luma_vector_prediction::103::53.9657::    }
+derive_spatial_luma_vector_prediction::104::233.7932::    if (out_availableFlagLXN[A]==1) {
+derive_spatial_luma_vector_prediction::105::177.0657::      if (refIdxA<0) {
+derive_spatial_luma_vector_prediction::106::357.4395::        out_availableFlagLXN[0] = out_availableFlagLXN[1] = false;
+derive_spatial_luma_vector_prediction::107::129.5664::        return; // error
+derive_spatial_luma_vector_prediction::108::66.2000::      }
+derive_spatial_luma_vector_prediction::109::183.7471::      assert(refIdxA>=0);
+derive_spatial_luma_vector_prediction::110::177.7560::      assert(refPicList>=0);
+derive_spatial_luma_vector_prediction::111::491.3536::      const de265_image* refPicA = ctx->get_image(shdr->RefPicList[refPicList][refIdxA ]);
+derive_spatial_luma_vector_prediction::112::546.7984::      const de265_image* refPicX = ctx->get_image(shdr->RefPicList[X         ][refIdxLX]);
+derive_spatial_luma_vector_prediction::113::389.2231::      //int picStateA = shdr->RefPicList_PicState[refPicList][refIdxA ];
+derive_spatial_luma_vector_prediction::114::440.0976::      //int picStateX = shdr->RefPicList_PicState[X         ][refIdxLX];
+derive_spatial_luma_vector_prediction::115::367.5873::      int isLongTermA = shdr->LongTermRefPic[refPicList][refIdxA ];
+derive_spatial_luma_vector_prediction::116::291.0103::      int isLongTermX = shdr->LongTermRefPic[X         ][refIdxLX];
+derive_spatial_luma_vector_prediction::117::445.6613::      logtrace(LogMotion,"scale MVP A: A-POC:%d X-POC:%d\n",
+derive_spatial_luma_vector_prediction::118::393.4401::               refPicA->PicOrderCntVal,refPicX->PicOrderCntVal);
+derive_spatial_luma_vector_prediction::119::228.9388::      if (!isLongTermA && !isLongTermX)
+derive_spatial_luma_vector_prediction::120::75.9930::      /*
+derive_spatial_luma_vector_prediction::121::213.8279::      if (picStateA == UsedForShortTermReference &&
+derive_spatial_luma_vector_prediction::122::220.4923::          picStateX == UsedForShortTermReference)
+derive_spatial_luma_vector_prediction::123::69.7650::      */
+derive_spatial_luma_vector_prediction::124::79.2694::        {
+derive_spatial_luma_vector_prediction::125::361.6357::          int distA = img->PicOrderCntVal - refPicA->PicOrderCntVal;
+derive_spatial_luma_vector_prediction::126::302.6607::          int distX = img->PicOrderCntVal - referenced_POC;
+derive_spatial_luma_vector_prediction::127::510.5249::          if (!scale_mv(&out_mvLXN[A], out_mvLXN[A], distA, distX)) {
+derive_spatial_luma_vector_prediction::128::481.5593::            ctx->add_warning(DE265_WARNING_INCORRECT_MOTION_VECTOR_SCALING, false);
+derive_spatial_luma_vector_prediction::129::323.1897::            img->integrity = INTEGRITY_DECODING_ERRORS;
+derive_spatial_luma_vector_prediction::130::92.3894::          }
+derive_spatial_luma_vector_prediction::131::76.7261::        }
+derive_spatial_luma_vector_prediction::132::48.9404::    }
+derive_spatial_luma_vector_prediction::133::35.0834::  }
+derive_spatial_luma_vector_prediction::134::77.2022::  // --- B ---
+derive_spatial_luma_vector_prediction::135::68.7442::  // 1.
+derive_spatial_luma_vector_prediction::136::173.7636::  int xB[3], yB[3];
+derive_spatial_luma_vector_prediction::137::195.0061::  xB[0] = xP+nPbW;
+derive_spatial_luma_vector_prediction::138::166.3580::  yB[0] = yP-1;
+derive_spatial_luma_vector_prediction::139::192.5570::  xB[1] = xB[0]-1;
+derive_spatial_luma_vector_prediction::140::168.0833::  yB[1] = yP-1;
+derive_spatial_luma_vector_prediction::141::166.3864::  xB[2] = xP-1;
+derive_spatial_luma_vector_prediction::142::165.2324::  yB[2] = yP-1;
+derive_spatial_luma_vector_prediction::143::69.1027::  // 2.
+derive_spatial_luma_vector_prediction::144::187.7793::  out_availableFlagLXN[B] = 0;
+derive_spatial_luma_vector_prediction::145::201.7265::  out_mvLXN[B].x = 0;
+derive_spatial_luma_vector_prediction::146::201.5637::  out_mvLXN[B].y = 0;
+derive_spatial_luma_vector_prediction::147::6.1714::  // 3. test B0,B1,B2 (Bk)
+derive_spatial_luma_vector_prediction::149::112.2920::  bool availableB[3];
+derive_spatial_luma_vector_prediction::150::223.0104::  for (int k=0;k<3;k++) {
+derive_spatial_luma_vector_prediction::151::713.1144::    availableB[k] = img->available_pred_blk(xC,yC, nCS, xP,yP, nPbW,nPbH,partIdx, xB[k],yB[k]);
+derive_spatial_luma_vector_prediction::152::294.9926::    if (availableB[k] && out_availableFlagLXN[B]==0) {
+derive_spatial_luma_vector_prediction::153::139.9250::      int Y=1-X;
+derive_spatial_luma_vector_prediction::154::376.8656::      const PBMotion& vi = img->get_mv_info(xB[k],yB[k]);
+derive_spatial_luma_vector_prediction::155::255.0467::      logtrace(LogMotion,"MVP B%d=\n",k);
+derive_spatial_luma_vector_prediction::156::145.4369::      logmvcand(vi);
+derive_spatial_luma_vector_prediction::157::191.1090::      const de265_image* imgX = NULL;
+derive_spatial_luma_vector_prediction::158::527.7561::      if (vi.predFlag[X]) imgX = ctx->get_image(shdr->RefPicList[X][ vi.refIdx[X] ]);
+derive_spatial_luma_vector_prediction::159::194.9249::      const de265_image* imgY = NULL;
+derive_spatial_luma_vector_prediction::160::531.0328::      if (vi.predFlag[Y]) imgY = ctx->get_image(shdr->RefPicList[Y][ vi.refIdx[Y] ]);
+derive_spatial_luma_vector_prediction::161::400.5255::      if (vi.predFlag[X] && imgX && imgX->PicOrderCntVal == referenced_POC) {
+derive_spatial_luma_vector_prediction::162::444.2259::        logtrace(LogMotion,"a) take B%d/L%d as B candidate with same POC\n",k,X);
+derive_spatial_luma_vector_prediction::163::215.9078::        out_availableFlagLXN[B]=1;
+derive_spatial_luma_vector_prediction::164::290.8272::        out_mvLXN[B] = vi.mv[X];
+derive_spatial_luma_vector_prediction::165::235.7608::        refIdxB = vi.refIdx[X];
+derive_spatial_luma_vector_prediction::166::65.2578::      }
+derive_spatial_luma_vector_prediction::167::438.9611::      else if (vi.predFlag[Y] && imgY && imgY->PicOrderCntVal == referenced_POC) {
+derive_spatial_luma_vector_prediction::168::191.7245::        logtrace(LogMotion,"b) take B%d/L%d as B candidate with same POC\n",k,Y);
+derive_spatial_luma_vector_prediction::169::238.9262::        out_availableFlagLXN[B]=1;
+derive_spatial_luma_vector_prediction::170::304.3784::        out_mvLXN[B] = vi.mv[Y];
+derive_spatial_luma_vector_prediction::171::237.0869::        refIdxB = vi.refIdx[Y];
+derive_spatial_luma_vector_prediction::172::64.1824::      }
+derive_spatial_luma_vector_prediction::173::49.5846::    }
+derive_spatial_luma_vector_prediction::174::36.1761::  }
+derive_spatial_luma_vector_prediction::175::70.1425::  // 4.
+derive_spatial_luma_vector_prediction::176::270.6449::  if (isScaledFlagLX==0 &&      // no A predictor,
+derive_spatial_luma_vector_prediction::177::280.2277::      out_availableFlagLXN[B])  // but an unscaled B predictor
+derive_spatial_luma_vector_prediction::178::49.4289::    {
+derive_spatial_luma_vector_prediction::179::174.5943::      // use unscaled B predictor as A predictor
+derive_spatial_luma_vector_prediction::180::319.5601::      logtrace(LogMotion,"copy the same-POC B candidate as additional A candidate\n");
+derive_spatial_luma_vector_prediction::181::201.9365::      out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::182::290.1046::      out_mvLXN[A] = out_mvLXN[B];
+derive_spatial_luma_vector_prediction::183::169.0408::      refIdxA = refIdxB;
+derive_spatial_luma_vector_prediction::184::48.8800::    }
+derive_spatial_luma_vector_prediction::185::66.4957::  // 5.
+derive_spatial_luma_vector_prediction::186::284.7872::  // If no A predictor, we output the unscaled B as the A predictor (above)
+derive_spatial_luma_vector_prediction::187::162.5421::  // and also add a scaled B predictor here.
+derive_spatial_luma_vector_prediction::188::308.5720::  // If there is (probably) an A predictor, no differing-POC B predictor is generated.
+derive_spatial_luma_vector_prediction::189::168.0505::  if (isScaledFlagLX==0) {
+derive_spatial_luma_vector_prediction::190::182.9907::    out_availableFlagLXN[B]=0;
+derive_spatial_luma_vector_prediction::191::384.1252::    for (int k=0 ; k<=2 && out_availableFlagLXN[B]==0 ; k++) {
+derive_spatial_luma_vector_prediction::192::147.5238::      int refPicList=-1;
+derive_spatial_luma_vector_prediction::193::160.9897::      if (availableB[k]) {
+derive_spatial_luma_vector_prediction::194::161.2850::        int Y=1-X;
+derive_spatial_luma_vector_prediction::195::416.3957::        const PBMotion& vi = img->get_mv_info(xB[k],yB[k]);
+derive_spatial_luma_vector_prediction::196::231.5140::        if (vi.predFlag[X]==1 &&
+derive_spatial_luma_vector_prediction::197::509.9434::            shdr->LongTermRefPic[X][refIdxLX] == shdr->LongTermRefPic[X][ vi.refIdx[X] ]) {
+derive_spatial_luma_vector_prediction::199::350.5247::          out_mvLXN[B] = vi.mv[X];
+derive_spatial_luma_vector_prediction::200::278.2262::          refIdxB = vi.refIdx[X];
+derive_spatial_luma_vector_prediction::201::180.2832::          refPicList = X;
+derive_spatial_luma_vector_prediction::202::84.7644::        }
+derive_spatial_luma_vector_prediction::203::267.2037::        else if (vi.predFlag[Y]==1 &&
+derive_spatial_luma_vector_prediction::204::639.2736::                 shdr->LongTermRefPic[X][refIdxLX] == shdr->LongTermRefPic[Y][ vi.refIdx[Y] ]) {
+derive_spatial_luma_vector_prediction::205::238.0892::          out_availableFlagLXN[B]=1;
+derive_spatial_luma_vector_prediction::206::320.1728::          out_mvLXN[B] = vi.mv[Y];
+derive_spatial_luma_vector_prediction::207::261.3892::          refIdxB = vi.refIdx[Y];
+derive_spatial_luma_vector_prediction::208::170.6381::          refPicList = Y;
+derive_spatial_luma_vector_prediction::209::83.1768::        }
+derive_spatial_luma_vector_prediction::210::69.7717::      }
+derive_spatial_luma_vector_prediction::211::259.3270::      if (out_availableFlagLXN[B]==1) {
+derive_spatial_luma_vector_prediction::212::195.3437::        if (refIdxB<0) {
+derive_spatial_luma_vector_prediction::213::384.1280::          out_availableFlagLXN[0] = out_availableFlagLXN[1] = false;
+derive_spatial_luma_vector_prediction::214::151.5025::          return; // error
+derive_spatial_luma_vector_prediction::215::82.3149::        }
+derive_spatial_luma_vector_prediction::216::202.8691::        assert(refPicList>=0);
+derive_spatial_luma_vector_prediction::217::209.8304::        assert(refIdxB>=0);
+derive_spatial_luma_vector_prediction::218::543.4222::        const de265_image* refPicB=ctx->get_image(shdr->RefPicList[refPicList][refIdxB ]);
+derive_spatial_luma_vector_prediction::219::582.1950::        const de265_image* refPicX=ctx->get_image(shdr->RefPicList[X         ][refIdxLX]);
+derive_spatial_luma_vector_prediction::220::381.2166::        int isLongTermB = shdr->LongTermRefPic[refPicList][refIdxB ];
+derive_spatial_luma_vector_prediction::221::445.4065::        int isLongTermX = shdr->LongTermRefPic[X         ][refIdxLX];
+derive_spatial_luma_vector_prediction::222::292.4482::        if (refPicB==NULL || refPicX==NULL) {
+derive_spatial_luma_vector_prediction::223::567.4090::          img->decctx->add_warning(DE265_WARNING_NONEXISTING_REFERENCE_PICTURE_ACCESSED,false);
+derive_spatial_luma_vector_prediction::224::326.5182::          img->integrity = INTEGRITY_DECODING_ERRORS;
+derive_spatial_luma_vector_prediction::225::81.5453::        }
+derive_spatial_luma_vector_prediction::226::370.4783::        else if (refPicB->PicOrderCntVal != refPicX->PicOrderCntVal &&
+derive_spatial_luma_vector_prediction::227::302.8633::                 !isLongTermB && !isLongTermX) {
+derive_spatial_luma_vector_prediction::228::379.0723::          int distB = img->PicOrderCntVal - refPicB->PicOrderCntVal;
+derive_spatial_luma_vector_prediction::229::314.7558::          int distX = img->PicOrderCntVal - referenced_POC;
+derive_spatial_luma_vector_prediction::230::702.1458::          logtrace(LogMotion,"scale MVP B: B-POC:%d X-POC:%d\n",refPicB->PicOrderCntVal,refPicX->PicOrderCntVal);
+derive_spatial_luma_vector_prediction::231::516.0815::          if (!scale_mv(&out_mvLXN[B], out_mvLXN[B], distB, distX)) {
+derive_spatial_luma_vector_prediction::232::517.6472::            ctx->add_warning(DE265_WARNING_INCORRECT_MOTION_VECTOR_SCALING, false);
+derive_spatial_luma_vector_prediction::233::348.0003::            img->integrity = INTEGRITY_DECODING_ERRORS;
+derive_spatial_luma_vector_prediction::234::96.3086::          }
+derive_spatial_luma_vector_prediction::235::83.4655::        }
+derive_spatial_luma_vector_prediction::236::64.5015::      }
+derive_spatial_luma_vector_prediction::237::48.9433::    }
+derive_spatial_luma_vector_prediction::238::34.1502::  }
+derive_spatial_luma_vector_prediction::239::12.3791::}
+compute_candidates::1::119.4581::void compute_candidates(
+compute_candidates::2::200.0567::    poi_t *p_poi_list,
+compute_candidates::3::195.0449::    addrtree_node_t *p_candidates
+compute_candidates::4::33.6997::)
+compute_candidates::5::33.3258::{
+compute_candidates::6::146.1955::    poi_t *poi;
+compute_candidates::7::96.0046::    unsigned int cursor;
+compute_candidates::8::127.1122::    uint64_t delta;
+compute_candidates::9::124.5462::    uint64_t v;
+compute_candidates::10::152.9931::    uint64_t freespace;
+compute_candidates::11::81.8564::    int count;
+compute_candidates::12::234.8857::    uint64_t max_address = 0xFFFFFFFFFFFFFFFF;
+compute_candidates::13::132.8998::    int i,j,z;
+compute_candidates::14::150.3068::    int nb_candidates = 0;
+compute_candidates::15::103.7818::    unsigned int memsize;
+compute_candidates::16::169.0826::    score_entry_t *p_scores;
+compute_candidates::17::188.9108::    pthread_t *p_threads = NULL;
+compute_candidates::18::222.4589::    parallel_params_t *p_threads_params = NULL;
+compute_candidates::19::151.3436::    int b_has_str = 0;
+compute_candidates::20::218.8510::    poi = p_poi_list->p_next;
+compute_candidates::21::138.6755::    while (poi != NULL)
+compute_candidates::22::52.5571::    {
+compute_candidates::23::341.6998::        if ((poi->type == POI_STRING) && !b_has_str)
+compute_candidates::24::80.6899::        {
+compute_candidates::25::195.4537::            b_has_str = 1;
+compute_candidates::26::80.5620::        }
+compute_candidates::27::206.6353::        poi = poi->p_next;
+compute_candidates::28::147.1554::        nb_candidates++;
+compute_candidates::29::52.0868::    }
+compute_candidates::30::95.0959::    i = 0;
+compute_candidates::31::221.8153::    poi = p_poi_list->p_next;
+compute_candidates::32::144.7396::    if (poi != NULL)
+compute_candidates::33::52.3962::    {
+compute_candidates::34::186.1575::        while ((poi != NULL))
+compute_candidates::35::81.7370::        {
+compute_candidates::36::348.2424::            progress_bar(i, nb_candidates, "Analyzing ...");
+compute_candidates::37::559.0325::            for (cursor=0; cursor<g_content_size; cursor+=((g_target_arch==ARCH_32)?4:8))
+compute_candidates::38::111.1291::            {
+compute_candidates::39::13.5143::                v = read_pointer(g_target_arch, g_target_endian, gp_content, cursor);
+compute_candidates::40::371.1565::                /* Candidate pointer must not be made of ASCII. */
+compute_candidates::41::430.2658::                /* Add heuristic because pointer should be aligned on 4bytes/8bytes 
+compute_candidates::42::448.9453::                 * if v % get_arch_pointer_size(arch) != 0 --> not aligned 
+compute_candidates::43::176.3629::                 * */
+compute_candidates::44::560.2426::                if ((v & g_mem_alignment_mask) == (poi->offset & g_mem_alignment_mask) && 
+compute_candidates::45::442.5702::                    !is_ascii_ptr(v, g_target_arch) && 
+compute_candidates::46::375.1840::                    is_ptr_aligned(v,g_target_arch))
+compute_candidates::47::149.6078::                {
+compute_candidates::48::461.3321::                    /* If PoI is a string, we expect a pointer on its first character. */
+compute_candidates::49::890.0576::                    if ( ((b_has_str == 1) && (poi->type == POI_STRING)) || ((b_has_str == 0) && (poi->type == POI_FUNCTION)) )
+compute_candidates::50::797.3053::                    //if ( ((b_has_str == 1) && (poi->type == POI_STRING)) || (poi->type == POI_FUNCTION) )
+compute_candidates::51::187.1931::                    {
+compute_candidates::52::359.8845::                        if (v>=poi->offset)
+compute_candidates::53::191.8701::                        {
+compute_candidates::54::450.6942::                            delta = (v - poi->offset);
+compute_candidates::55::884.1370::                            freespace = ( ((g_target_arch==ARCH_32)?0xffffffff:0xffffffffffffffff) - delta) + 1;
+compute_candidates::56::438.3932::                            if (freespace >= g_content_size)
+compute_candidates::57::255.4247::                            {
+compute_candidates::58::399.9975::                                /* register candidate. */
+compute_candidates::59::668.0603::                                addrtree_register_address(p_candidates, (uint64_t)delta);
+compute_candidates::60::251.7533::                            }
+compute_candidates::61::222.6444::                        }
+compute_candidates::62::192.8848::                    }
+compute_candidates::63::160.5118::                }
+compute_candidates::64::124.9345::            }
+compute_candidates::65::342.9607::            /* Does the memory used exceed our limited space ? */
+compute_candidates::66::431.2785::            memsize = addrtree_get_memsize(p_candidates);
+compute_candidates::67::334.9340::            if (memsize>MAX_MEM_AMOUNT)
+compute_candidates::68::129.9461::            {
+compute_candidates::69::425.0841::                memsize = addrtree_get_memsize(p_candidates);
+compute_candidates::70::517.7932::                info("[mem] Memory tree is too big (%d bytes), reducing...\r\n", memsize);
+compute_candidates::71::386.0165::                max_votes = addrtree_max_vote(p_candidates);
+compute_candidates::72::404.3957::                addrtree_filter(p_candidates, max_votes/2);   
+compute_candidates::73::383.7360::                memsize = addrtree_get_memsize(p_candidates);
+compute_candidates::74::407.1469::                info("[mem] Memory tree reduced to %d bytes\r\n", memsize);
+compute_candidates::75::115.7695::            }
+compute_candidates::76::244.5346::            poi = poi->p_next;
+compute_candidates::77::135.5474::            i++;
+compute_candidates::78::84.0727::        }
+compute_candidates::79::159.9019::        progress_bar_done();
+compute_candidates::80::247.8679::        /* Loop on candidates, keep the best one. */
+compute_candidates::81::186.4807::        g_bm_votes = -1;
+compute_candidates::82::196.7611::        g_bm_total_votes = 0;
+compute_candidates::83::172.1345::        g_bm_count=0;
+compute_candidates::84::354.1133::        addrtree_browse(p_candidates, find_best_match, 0);
+compute_candidates::85::373.8572::        logm("[i] Found %d base addresses to test\n", g_bm_count);
+compute_candidates::86::98.2313::        /*
+compute_candidates::87::255.6565::         * Best match address corresponds to the address for which we identified
+compute_candidates::88::299.2051::         * the biggest numbers of alleged pointers. The best match is not always
+compute_candidates::89::329.3143::         * the correct base address, so we just display it here and try to assess
+compute_candidates::90::254.9821::         * other candidates in case we missed the correct base address.
+compute_candidates::91::97.8910::         */
+compute_candidates::92::267.6683::        gp_ba_candidates = (base_address_candidate *)malloc(sizeof(base_address_candidate) * g_bm_count);
+compute_candidates::93::257.9983::        if (gp_ba_candidates != NULL)
+compute_candidates::94::90.8645::        {
+compute_candidates::95::359.3020::            max_votes = addrtree_max_vote(p_candidates);
+compute_candidates::96::217.5377::            g_bm_kept = 0;
+compute_candidates::97::257.0464::            gp_ba_candidates_index = 0;
+compute_candidates::98::401.4147::            addrtree_browse(p_candidates, fill_best_matches, 0);
+compute_candidates::99::221.5223::            info("tree browsed\n");
+compute_candidates::100::266.8933::            if (g_target_arch == ARCH_64)
+compute_candidates::101::556.3418::                info("Best match for base address is %016lx (%d votes)\n", g_bm_address, g_bm_votes);
+compute_candidates::102::116.3980::            else
+compute_candidates::103::534.6783::                info("Best match for base address is %08x (%d votes)\n", g_bm_address, g_bm_votes);
+compute_candidates::104::195.1041::            /* Sort candidates array. */
+compute_candidates::105::547.9604::            qsort(gp_ba_candidates, g_bm_count, sizeof(base_address_candidate), candidate_compare_func);
+compute_candidates::106::369.3596::            debug("Found %d candidates !\n", gp_ba_candidates_index);
+compute_candidates::107::383.9564::            for (i=0; i<gp_ba_candidates_index; i++)
+compute_candidates::108::115.8476::            {
+compute_candidates::109::837.6441::                debug("Found candidate address %016lx (votes: %d, position: %d)\n", gp_ba_candidates[i].address, gp_ba_candidates[i].votes, i+1);
+compute_candidates::110::114.2636::            }
+compute_candidates::111::134.9592::            if (!g_deepmode)
+compute_candidates::113::534.4821::                for (i=max_votes;i>=0;i--)
+compute_candidates::114::177.0377::                {
+compute_candidates::115::343.8321::                    g_bm_kept = 0;
+compute_candidates::116::521.2549::                    for (j=0;j<g_bm_count;j++)
+compute_candidates::117::201.6758::                    {
+compute_candidates::118::492.9790::                        if (gp_ba_candidates[j].votes >= i)
+compute_candidates::119::242.2797::                        {
+compute_candidates::120::377.8985::                            g_bm_kept++;
+compute_candidates::121::235.4446::                        }
+compute_candidates::122::198.9693::                    }
+compute_candidates::123::372.2316::                    if (g_bm_kept>=30)
+compute_candidates::124::204.7925::                    {
+compute_candidates::125::373.5859::                        max_votes = i+1;
+compute_candidates::126::277.6299::                        break;
+compute_candidates::127::205.0152::                    }
+compute_candidates::128::173.7680::                }
+compute_candidates::129::141.7870::            }
+compute_candidates::130::143.1487::            else
+compute_candidates::131::141.6301::            {
+compute_candidates::132::448.6540::                g_bm_kept = gp_ba_candidates_index;
+compute_candidates::133::118.4992::                max_votes = 0;
+compute_candidates::134::223.3545::            }            
+compute_candidates::135::507.0530::            info("Keep %d candidates with max vote=%d\n", g_bm_kept, max_votes);
+compute_candidates::136::138.4861::            /*
+compute_candidates::137::313.6420::             * Loop on candidate base addresses and check if arrays of values may
+compute_candidates::138::325.6885::             * point to known point of interests (text strings or other arrays).
+compute_candidates::139::132.8885::             * 
+compute_candidates::140::322.8318::             * This method gives good results when at least one array contains a
+compute_candidates::141::238.1838::             * list of pointers to text strings.
+compute_candidates::142::131.6328::             */
+compute_candidates::143::274.5800::            /* Allocate memory for our score table. */
+compute_candidates::144::551.5130::            p_scores = (score_entry_t*)malloc(sizeof(score_entry_t) * g_bm_kept);
+compute_candidates::145::161.6787::            z=0;
+compute_candidates::146::234.2716::            if (p_scores != NULL)
+compute_candidates::147::114.8529::            {
+compute_candidates::148::502.6000::                memset(p_scores, 0, sizeof(score_entry_t)*g_bm_kept);
+compute_candidates::149::383.6968::                /* Compute the number of candidates each thread is going to check. */
+compute_candidates::150::345.8688::                z = g_bm_kept / g_nb_threads;
+compute_candidates::151::345.2003::                /* Allocate some space to store the threads id. */
+compute_candidates::152::544.8922::                p_threads = (pthread_t *)malloc(sizeof(pthread_t) * g_nb_threads);
+compute_candidates::153::726.9273::                p_threads_params = (parallel_params_t *)malloc(sizeof(parallel_params_t) * g_nb_threads);
+compute_candidates::154::470.2502::                if ((p_threads != NULL) && (p_threads_params != NULL))
+compute_candidates::155::147.9779::                {
+compute_candidates::156::550.0946::                    memset(p_threads, 0, sizeof(pthread_t) * g_nb_threads);
+compute_candidates::157::619.0482::                    memset(p_threads_params, 0, sizeof(parallel_params_t) * g_nb_threads);
+compute_candidates::158::298.0390::                    g_bm_processed = 0;
+compute_candidates::159::423.7026::                    info("Starting %d threads ...\n", g_nb_threads);
+compute_candidates::160::341.1245::                    /* Create `g_nb_threads`. */
+compute_candidates::161::437.5537::                    for (i=0; i<g_nb_threads; i++)
+compute_candidates::162::184.0810::                    {
+compute_candidates::163::483.3433::                        p_threads_params[i].p_scores = p_scores;
+compute_candidates::164::548.2199::                        p_threads_params[i].p_poi_list = p_poi_list;
+compute_candidates::165::459.6764::                        p_threads_params[i].p_candidates = p_candidates;
+compute_candidates::166::538.5135::                        p_threads_params[i].arch = g_target_arch;
+compute_candidates::167::543.4697::                        p_threads_params[i].endian = g_target_endian;
+compute_candidates::168::461.7510::                        p_threads_params[i].content = gp_content;
+compute_candidates::169::549.7848::                        p_threads_params[i].ui_content_size = g_content_size;
+compute_candidates::170::476.6974::                        p_threads_params[i].lock = &deep_lock;
+compute_candidates::171::463.3126::                        p_threads_params[i].start = i*z;
+compute_candidates::172::421.7335::                        p_threads_params[i].count = z;
+compute_candidates::173::440.2706::                        if (i == (g_nb_threads - 1))
+compute_candidates::174::227.5212::                        {
+compute_candidates::175::518.0968::                            if ((i*z + z) < g_bm_kept)
+compute_candidates::176::268.6962::                            {
+compute_candidates::177::794.8373::                                p_threads_params[i].count = g_bm_kept -   p_threads_params[i].start;
+compute_candidates::178::240.2217::                            }
+compute_candidates::179::244.0601::                        }
+compute_candidates::180::1148.6722::                        info("Thread #%d will cover %d to %d\n", i, p_threads_params[i].start, p_threads_params[i].start+p_threads_params[i].count);
+compute_candidates::181::308.0058::                        pthread_create(
+compute_candidates::182::379.9752::                            &p_threads[i],
+compute_candidates::183::302.5558::                            NULL,
+compute_candidates::184::384.3703::                            parallel_refine_candidates,
+compute_candidates::185::485.7870::                            (void *)&p_threads_params[i]
+compute_candidates::186::232.7768::                        );
+compute_candidates::187::188.0028::                    }
+compute_candidates::188::390.8441::                    /* Wait for these threads to finish. */
+compute_candidates::189::498.0531::                    for (i=0; i<g_nb_threads; i++)
+compute_candidates::190::196.9986::                    {
+compute_candidates::191::506.4117::                        pthread_join(p_threads[i], NULL);
+compute_candidates::192::195.5263::                    }
+compute_candidates::193::306.0726::                    progress_bar_done();
+compute_candidates::194::171.9416::                    max_address = g_max_address;
+compute_candidates::195::369.4427::                    /* Free pthreads. */
+compute_candidates::196::329.5096::                    free(p_threads);
+compute_candidates::197::348.6776::                    free(p_threads_params);
+compute_candidates::198::163.9911::                }
+compute_candidates::199::164.9054::                else
+compute_candidates::200::163.5907::                {
+compute_candidates::201::451.3418::                    error("Cannot allocate memory for multi-threaded search.");
+compute_candidates::202::160.3268::                }
+compute_candidates::203::499.8896::                info("Best match based on pointers count: %016lx\n", max_address);
+compute_candidates::204::391.6694::                /* Check if we have a single candidate with valid array. */
+compute_candidates::205::209.1476::                count = 0;
+compute_candidates::206::426.6831::                for (i=0; i<g_bm_kept; i++)
+compute_candidates::207::158.0412::                {
+compute_candidates::208::464.3743::                    if (p_scores[i].has_valid_array > 0)
+compute_candidates::209::196.8852::                    {
+compute_candidates::210::270.3919::                        count++;
+compute_candidates::211::197.0369::                    }
+compute_candidates::212::169.2236::                }
+compute_candidates::213::272.5481::                if (count == 1)
+compute_candidates::214::162.9337::                {
+compute_candidates::215::371.5960::                    for (i=0; i<g_bm_kept; i++)
+Msg::1::78.7717::void  Msg() {
+Msg::2::408.1648::	MessageBoxA(NULL, "嘿嘿！", "堆栈溢出测试", 0);
+Msg::3::10.4084::}
+Add::1::139.8650::int  Add(int a, int b) {
+Add::2::95.6055::	int* p = &a;
+Add::3::150.6759::	*(p-1) = (int)Msg;
+Add::4::69.2367::	return a + b;
+Add::5::10.2770::}
+main::1::54.6297::void main() {
+main::2::138.8641::	printf("%d", Add(1, 2));
+main::3::59.6045::	system("pause");
+main::4::35.3849::	return;
+main::5::10.1404::}
+derive_spatial_luma_vector_prediction::1::230.1341::// 8.5.3.1.6
+derive_spatial_luma_vector_prediction::2::431.3482::void derive_spatial_luma_vector_prediction(base_context* ctx,
+derive_spatial_luma_vector_prediction::3::493.5695::                                           de265_image* img,
+derive_spatial_luma_vector_prediction::4::531.9108::                                           const slice_segment_header* shdr,
+derive_spatial_luma_vector_prediction::5::689.5804::                                           int xC,int yC,int nCS,int xP,int yP,
+derive_spatial_luma_vector_prediction::6::594.9593::                                           int nPbW,int nPbH, int X,
+derive_spatial_luma_vector_prediction::7::537.1721::                                           int refIdxLX, int partIdx,
+derive_spatial_luma_vector_prediction::8::595.5970::                                           uint8_t out_availableFlagLXN[2],
+derive_spatial_luma_vector_prediction::9::544.6716::                                           MotionVector out_mvLXN[2])
+derive_spatial_luma_vector_prediction::10::39.6299::{
+derive_spatial_luma_vector_prediction::11::301.2087::  if (refIdxLX >= MAX_NUM_REF_PICS) {
+derive_spatial_luma_vector_prediction::12::532.1599::    ctx->add_warning(DE265_WARNING_INCORRECT_MOTION_VECTOR_SCALING, false);
+derive_spatial_luma_vector_prediction::13::340.5375::    img->integrity = INTEGRITY_DECODING_ERRORS;
+derive_spatial_luma_vector_prediction::14::92.1616::    out_availableFlagLXN[0] = false;
+derive_spatial_luma_vector_prediction::15::202.5281::    out_availableFlagLXN[1] = false;
+derive_spatial_luma_vector_prediction::16::221.1711::    out_mvLXN[0] = MotionVector{};
+derive_spatial_luma_vector_prediction::17::217.5882::    out_mvLXN[1] = MotionVector{};
+derive_spatial_luma_vector_prediction::18::64.8187::    return;
+derive_spatial_luma_vector_prediction::19::34.8934::  }
+derive_spatial_luma_vector_prediction::20::144.6198::  int isScaledFlagLX = 0;
+derive_spatial_luma_vector_prediction::21::97.8417::  const int A=0;
+derive_spatial_luma_vector_prediction::22::97.2986::  const int B=1;
+derive_spatial_luma_vector_prediction::23::169.4641::  out_availableFlagLXN[A] = 0;
+derive_spatial_luma_vector_prediction::24::170.4811::  out_availableFlagLXN[B] = 0;
+derive_spatial_luma_vector_prediction::25::74.3089::  // --- A ---
+derive_spatial_luma_vector_prediction::26::61.9744::  // 1.
+derive_spatial_luma_vector_prediction::27::155.8167::  int xA[2], yA[2];
+derive_spatial_luma_vector_prediction::28::148.9188::  xA[0] = xP-1;
+derive_spatial_luma_vector_prediction::29::176.0562::  yA[0] = yP + nPbH;
+derive_spatial_luma_vector_prediction::30::153.7812::  xA[1] = xA[0];
+derive_spatial_luma_vector_prediction::31::177.5799::  yA[1] = yA[0]-1;
+derive_spatial_luma_vector_prediction::32::59.3073::  // 2.
+derive_spatial_luma_vector_prediction::33::168.2144::  out_availableFlagLXN[A] = 0;
+derive_spatial_luma_vector_prediction::34::180.2883::  out_mvLXN[A].x = 0;
+derive_spatial_luma_vector_prediction::35::185.5391::  out_mvLXN[A].y = 0;
+derive_spatial_luma_vector_prediction::36::97.2497::  // 3. / 4.
+derive_spatial_luma_vector_prediction::37::99.0050::  bool availableA[2];
+derive_spatial_luma_vector_prediction::38::644.4591::  availableA[0] = img->available_pred_blk(xC,yC, nCS, xP,yP, nPbW,nPbH,partIdx, xA[0],yA[0]);
+derive_spatial_luma_vector_prediction::39::655.7600::  availableA[1] = img->available_pred_blk(xC,yC, nCS, xP,yP, nPbW,nPbH,partIdx, xA[1],yA[1]);
+derive_spatial_luma_vector_prediction::40::62.7414::  // 5.
+derive_spatial_luma_vector_prediction::41::199.4772::  if (availableA[0] || availableA[1]) {
+derive_spatial_luma_vector_prediction::42::142.9057::    isScaledFlagLX = 1;
+derive_spatial_luma_vector_prediction::43::35.8248::  }
+derive_spatial_luma_vector_prediction::44::187.6632::  // 6.  test A0 and A1  (Ak)
+derive_spatial_luma_vector_prediction::45::122.8423::  int refIdxA=-1;
+derive_spatial_luma_vector_prediction::46::165.8008::  // the POC we want to reference in this PB
+derive_spatial_luma_vector_prediction::47::414.5409::  const de265_image* tmpimg = ctx->get_image(shdr->RefPicList[X][ refIdxLX ]);
+derive_spatial_luma_vector_prediction::48::170.4601::  if (tmpimg==NULL) { return; }
+derive_spatial_luma_vector_prediction::49::44.9284::  const int referenced_POC = tmpimg->PicOrderCntVal;
+derive_spatial_luma_vector_prediction::51::151.1843::    if (availableA[k] &&
+derive_spatial_luma_vector_prediction::52::377.4350::        out_availableFlagLXN[A]==0 && // no A?-predictor so far
+derive_spatial_luma_vector_prediction::53::407.4319::        img->get_pred_mode(xA[k],yA[k]) != MODE_INTRA) {
+derive_spatial_luma_vector_prediction::54::142.5447::      int Y=1-X;
+derive_spatial_luma_vector_prediction::55::381.2228::      const PBMotion& vi = img->get_mv_info(xA[k],yA[k]);
+derive_spatial_luma_vector_prediction::56::260.0481::      logtrace(LogMotion,"MVP A%d=\n",k);
+derive_spatial_luma_vector_prediction::57::141.3833::      logmvcand(vi);
+derive_spatial_luma_vector_prediction::58::191.9453::      const de265_image* imgX = NULL;
+derive_spatial_luma_vector_prediction::59::524.1889::      if (vi.predFlag[X]) imgX = ctx->get_image(shdr->RefPicList[X][ vi.refIdx[X] ]);
+derive_spatial_luma_vector_prediction::60::196.6299::      const de265_image* imgY = NULL;
+derive_spatial_luma_vector_prediction::61::539.1241::      if (vi.predFlag[Y]) imgY = ctx->get_image(shdr->RefPicList[Y][ vi.refIdx[Y] ]);
+derive_spatial_luma_vector_prediction::62::234.8116::      // check whether the predictor X is available and references the same POC
+derive_spatial_luma_vector_prediction::63::399.5859::      if (vi.predFlag[X] && imgX && imgX->PicOrderCntVal == referenced_POC) {
+derive_spatial_luma_vector_prediction::64::420.3488::        logtrace(LogMotion,"take A%d/L%d as A candidate with same POC\n",k,X);
+derive_spatial_luma_vector_prediction::65::219.7479::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::66::288.7475::        out_mvLXN[A] = vi.mv[X];
+derive_spatial_luma_vector_prediction::67::234.2914::        refIdxA = vi.refIdx[X];
+derive_spatial_luma_vector_prediction::68::64.9098::      }
+derive_spatial_luma_vector_prediction::69::285.0236::      // check whether the other predictor (Y) is available and references the same POC
+derive_spatial_luma_vector_prediction::70::423.2102::      else if (vi.predFlag[Y] && imgY && imgY->PicOrderCntVal == referenced_POC) {
+derive_spatial_luma_vector_prediction::71::458.6632::        logtrace(LogMotion,"take A%d/L%d as A candidate with same POC\n",k,Y);
+derive_spatial_luma_vector_prediction::72::226.0326::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::73::290.3179::        out_mvLXN[A] = vi.mv[Y];
+derive_spatial_luma_vector_prediction::74::228.4218::        refIdxA = vi.refIdx[Y];
+derive_spatial_luma_vector_prediction::75::62.9539::      }
+derive_spatial_luma_vector_prediction::76::47.7499::    }
+derive_spatial_luma_vector_prediction::77::36.2193::  }
+derive_spatial_luma_vector_prediction::78::301.8848::  // 7. If there is no predictor referencing the same POC, we take any other reference as
+derive_spatial_luma_vector_prediction::79::289.9316::  //    long as it is the same type of reference (long-term / short-term)
+derive_spatial_luma_vector_prediction::80::364.8517::  for (int k=0 ; k<=1 && out_availableFlagLXN[A]==0 ; k++) {
+derive_spatial_luma_vector_prediction::81::128.0671::    int refPicList=-1;
+derive_spatial_luma_vector_prediction::82::136.2762::    if (availableA[k] &&
+derive_spatial_luma_vector_prediction::83::318.8507::        // TODO: we could remove this call by storing the result of the similar computation above
+derive_spatial_luma_vector_prediction::84::399.5252::        img->get_pred_mode(xA[k],yA[k]) != MODE_INTRA) {
+derive_spatial_luma_vector_prediction::85::141.6382::      int Y=1-X;
+derive_spatial_luma_vector_prediction::86::381.9064::      const PBMotion& vi = img->get_mv_info(xA[k],yA[k]);
+derive_spatial_luma_vector_prediction::87::210.3310::      if (vi.predFlag[X]==1 &&
+derive_spatial_luma_vector_prediction::88::556.2764::          shdr->LongTermRefPic[X][refIdxLX] == shdr->LongTermRefPic[X][ vi.refIdx[X] ]) {
+derive_spatial_luma_vector_prediction::89::446.8063::        logtrace(LogMotion,"take A%D/L%d as A candidate with different POCs\n",k,X);
+derive_spatial_luma_vector_prediction::90::231.6211::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::91::297.6886::        out_mvLXN[A] = vi.mv[X];
+derive_spatial_luma_vector_prediction::92::245.1558::        refIdxA = vi.refIdx[X];
+derive_spatial_luma_vector_prediction::93::154.9092::        refPicList = X;
+derive_spatial_luma_vector_prediction::94::33.4300::      }
+derive_spatial_luma_vector_prediction::96::655.3190::               shdr->LongTermRefPic[X][refIdxLX] == shdr->LongTermRefPic[Y][ vi.refIdx[Y] ]) {
+derive_spatial_luma_vector_prediction::97::457.5874::        logtrace(LogMotion,"take A%d/L%d as A candidate with different POCs\n",k,Y);
+derive_spatial_luma_vector_prediction::98::221.5365::        out_availableFlagLXN[A]=1;
+derive_spatial_luma_vector_prediction::99::296.0308::        out_mvLXN[A] = vi.mv[Y];
+derive_spatial_luma_vector_prediction::100::236.2637::        refIdxA = vi.refIdx[Y];
+derive_spatial_luma_vector_prediction::101::146.7216::        refPicList = Y;
+derive_spatial_luma_vector_prediction::102::64.7599::      }
+derive_spatial_luma_vector_prediction::103::53.9657::    }
+derive_spatial_luma_vector_prediction::104::233.7932::    if (out_availableFlagLXN[A]==1) {
+derive_spatial_luma_vector_prediction::105::177.0657::      if (refIdxA<0) {
+derive_spatial_luma_vector_prediction::106::357.4395::        out_availableFlagLXN[0] = out_availableFlagLXN[1] = false;
+derive_spatial_luma_vector_prediction::107::129.5664::        return; // error
+derive_spatial_luma_vector_prediction::108::66.2000::      }
+derive_spatial_luma_vector_prediction::109::183.7471::      assert(refIdxA>=0);
+derive_spatial_luma_vector_prediction::110::177.7560::      assert(refPicList>=0);
+derive_spatial_luma_vector_prediction::111::491.3536::      const de265_image* refPicA = ctx->get_image(shdr->RefPicList[refPicList][refIdxA ]);
+derive_spatial_luma_vector_prediction::112::546.7984::      const de265_image* refPicX = ctx->get_image(shdr->RefPicList[X         ][refIdxLX]);
+derive_spatial_luma_vector_prediction::113::389.2231::      //int picStateA = shdr->RefPicList_PicState[refPicList][refIdxA ];
+derive_spatial_luma_vector_prediction::114::440.0976::      //int picStateX = shdr->RefPicList_PicState[X         ][refIdxLX];
+derive_spatial_luma_vector_prediction::115::367.5873::      int isLongTermA = shdr->LongTermRefPic[refPicList][refIdxA ];
+derive_spatial_luma_vector_prediction::116::291.0103::      int isLongTermX = shdr->LongTermRefPic[X         ][refIdxLX];
+derive_spatial_luma_vector_prediction::117::445.6613::      logtrace(LogMotion,"scale MVP A: A-POC:%d X-POC:%d\n",
+derive_spatial_luma_vector_prediction::118::393.4401::               refPicA->PicOrderCntVal,refPicX->PicOrderCntVal);
+derive_spatial_luma_vector_prediction::119::228.9388::      if (!isLongTermA && !isLongTermX)
+derive_spatial_luma_vector_prediction::120::75.9930::      /*
+derive_spatial_luma_vector_prediction::121::213.8279::      if (picStateA == UsedForShortTermReference &&
+derive_spatial_luma_vector_prediction::122::220.4923::          picStateX == UsedForShortTermReference)
+derive_spatial_luma_vector_prediction::123::69.7650::      */
+derive_spatial_luma_vector_prediction::124::79.2694::        {
+derive_spatial_luma_vector_prediction::125::361.6357::          int distA = img->PicOrderCntVal - refPicA->PicOrderCntVal;
+derive_spatial_luma_vector_prediction::126::302.6607::          int distX = img->PicOrderCntVal - referenced_POC;
+derive_spatial_luma_vector_prediction::127::510.5249::          if (!scale_mv(&out_mvLXN[A], out_mvLXN[A], distA, distX)) {
+derive_spatial_luma_vector_prediction::128::481.5593::            ctx->add_warning(DE265_WARNING_INCORRECT_MOTION_VECTOR_SCALING, false);
+derive_spatial_luma_vector_prediction::129::323.1897::            img->integrity = INTEGRITY_DECODING_ERRORS;
+derive_spatial_luma_vector_prediction::130::92.3894::          }
+derive_spatial_luma_vector_prediction::131::76.7261::        }
+derive_spatial_luma_vector_prediction::132::48.9404::    }
+derive_spatial_luma_vector_prediction::133::35.0834::  }
+derive_spatial_luma_vector_prediction::134::77.2022::  // --- B ---
+derive_spatial_luma_vector_prediction::135::68.7442::  // 1.
+derive_spatial_luma_vector_prediction::136::173.7636::  int xB[3], yB[3];
+derive_spatial_luma_vector_prediction::137::195.0061::  xB[0] = xP+nPbW;
+derive_spatial_luma_vector_prediction::138::166.3580::  yB[0] = yP-1;
+derive_spatial_luma_vector_prediction::139::192.5570::  xB[1] = xB[0]-1;
+derive_spatial_luma_vector_prediction::140::168.0833::  yB[1] = yP-1;
+derive_spatial_luma_vector_prediction::141::166.3864::  xB[2] = xP-1;
+derive_spatial_luma_vector_prediction::142::165.2324::  yB[2] = yP-1;
+derive_spatial_luma_vector_prediction::143::69.1027::  // 2.
+derive_spatial_luma_vector_prediction::144::187.7793::  out_availableFlagLXN[B] = 0;
+derive_spatial_luma_vector_prediction::145::201.7265::  out_mvLXN[B].x = 0;
+derive_spatial_luma_vector_prediction::146::201.5637::  out_mvLXN[B].y = 0;
+derive_spatial_luma_vector_prediction::147::6.1714::  // 3. test B0,B1,B2 (Bk)
+xmlValidateElementContent::1::231.4843::xmlValidateElementContent(xmlValidCtxtPtr ctxt, xmlNodePtr child,
+xmlValidateElementContent::2::277.9716::if ((elemDecl == NULL) || (parent == NULL) || (ctxt == NULL))
+xmlValidateElementContent::3::68.0715::return(-1);
+xmlValidateElementContent::4::101.2808::cont = elemDecl->content;
+xmlValidateElementContent::5::177.3839::ret = xmlValidBuildContentModel(ctxt, elemDecl);
+xmlValidateElementContent::6::141.9623::if (elemDecl->contModel == NULL) {
+xmlValidateElementContent::7::65.5963::return(-1);
+xmlValidateElementContent::8::97.3728::xmlRegExecCtxtPtr exec;
+xmlValidateElementContent::9::60.7869::return(-1);
+xmlValidateElementContent::10::98.9142::ctxt->nodeMax = 0;
+xmlValidateElementContent::11::58.9500::cur = child;
+xmlValidateElementContent::12::96.2391::while (cur != NULL) {
+xmlValidateElementContent::13::89.6512::switch (cur->type) {
+xmlValidateElementContent::14::125.0150::if ((cur->children != NULL) &&
+xmlValidateElementContent::15::134.1884::(cur->children->children != NULL)) {
+xmlValidateElementContent::16::113.1826::nodeVPush(ctxt, cur);
+xmlValidateElementContent::17::38.1961::break;
+xmlValidateElementContent::18::124.5482::if (xmlIsBlankNode(cur))
+xmlValidateElementContent::19::40.7488::break;
+xmlValidateElementContent::20::57.2571::ret = 0;
+xmlValidateElementContent::21::55.8067::ret = 0;
+xmlValidateElementContent::22::236.4633::if ((cur->ns != NULL) && (cur->ns->prefix != NULL)) {
+xmlValidateElementContent::23::80.9933::xmlChar fn[50];
+xmlValidateElementContent::24::67.7538::ret = -1;
+xmlValidateElementContent::25::182.7823::ret = xmlRegExecPushString(exec, fullname, NULL);
+xmlValidateElementContent::26::212.0552::if ((fullname != fn) && (fullname != cur->name))
+xmlValidateElementContent::27::87.8150::xmlFree(fullname);
+xmlValidateElementContent::28::47.9498::} else {
+xmlValidateElementContent::29::197.7066::ret = xmlRegExecPushString(exec, cur->name, NULL);
+xmlValidateElementContent::30::38.2441::break;
+xmlValidateElementContent::31::39.1788::break;
+xmlValidateElementContent::32::83.2723::cur = cur->next;
+xmlValidateElementContent::33::96.3375::while (cur == NULL) {
+xmlValidateElementContent::34::111.9582::cur = nodeVPop(ctxt);
+xmlValidateElementContent::35::38.2359::break;
+xmlValidateElementContent::36::83.3555::cur = cur->next;
+xmlValidateElementContent::37::174.3302::ret = xmlRegExecPushString(exec, NULL, NULL);
+xmlValidateElementContent::38::113.7528::xmlRegFreeExecCtxt(exec);
+xmlValidateElementContent::39::236.8989::if ((warn) && ((ret != 1) && (ret != -3))) {
+xmlValidateElementContent::40::104.5833::if (ctxt != NULL) {
+xmlValidateElementContent::41::74.7096::char expr[5000];
+xmlValidateElementContent::42::258.2154::xmlErrValidNode(ctxt, parent, XML_DTD_CONTENT_MODEL,
+xmlValidateElementContent::43::258.9551::xmlErrValidNode(ctxt, parent, XML_DTD_CONTENT_MODEL,
+xmlValidateElementContent::44::50.1479::} else {
+xmlValidateElementContent::45::98.6967::if (name != NULL) {
+xmlValidateElementContent::46::261.7969::xmlErrValidNode(ctxt, parent, XML_DTD_CONTENT_MODEL,
+xmlValidateElementContent::47::268.6311::xmlErrValidNode(ctxt, parent, XML_DTD_CONTENT_MODEL,
+xmlValidateElementContent::48::63.2403::ret = 0;
+xmlValidateElementContent::49::94.9872::if (ret == -3)
+xmlValidateElementContent::50::61.1895::ret = 1;
+xmlValidateElementContent::51::21.2127::ctxt->nodeMax = 0;
+xmlAddRef::1::283.5717::xmlAddRef(xmlValidCtxtPtr ctxt, xmlDocPtr doc, const xmlChar *value,
+xmlAddRef::2::75.1079::return(NULL);
+xmlAddRef::3::99.5161::if (value == NULL) {
+xmlAddRef::4::74.4607::return(NULL);
+xmlAddRef::5::100.2503::if (attr == NULL) {
+xmlAddRef::6::72.8582::return(NULL);
+xmlAddRef::7::161.5318::table = (xmlRefTablePtr) doc->refs;
+xmlAddRef::8::224.2728::doc->refs = table = xmlHashCreateDict(0, doc->dict);
+xmlAddRef::9::93.6295::if (table == NULL) {
+xmlAddRef::10::101.8713::xmlVErrMemory(ctxt,
+xmlAddRef::11::218.2621::ret = (xmlRefPtr) xmlMalloc(sizeof(xmlRef));
+xmlAddRef::12::162.9993::xmlVErrMemory(ctxt, "malloc failed");
+xmlAddRef::13::136.9154::ret->value = xmlStrdup(value);
+xmlAddRef::14::237.4514::if ((ctxt != NULL) && (ctxt->vstateNr != 0)) {
+xmlAddRef::15::163.7675::ret->name = xmlStrdup(attr->name);
+xmlAddRef::16::84.8453::ret->name = NULL;
+xmlAddRef::17::176.2567::ret->lineno = xmlGetLineNo(attr->parent);
+xmlAddRef::18::278.3838::if (NULL == (ref_list = xmlListCreate(xmlFreeRef, xmlDummyCompare))) {
+xmlAddRef::19::216.8588::xmlErrValid(NULL, XML_ERR_INTERNAL_ERROR,
+xmlAddRef::20::223.0087::if (xmlHashAddEntry(table, value, ref_list) < 0) {
+xmlAddRef::21::107.8909::xmlListDelete(ref_list);
+xmlAddRef::22::27.7471::}
+xmlAddRef::23::201.0310::if (xmlListAppend(ref_list, ret) != 0) {
+xmlAddRef::24::202.3536::xmlErrValid(NULL, XML_ERR_INTERNAL_ERROR,
+xmlAddRef::25::64.5075::return(ret);
+xmlAddRef::26::93.3576::if (ret != NULL) {
+xmlAddRef::27::103.3814::if (ret->value != NULL)
+xmlAddRef::28::120.8020::xmlFree((char *)ret->value);
+xmlAddRef::29::102.6470::if (ret->name != NULL)
+xmlAddRef::30::123.3394::xmlFree((char *)ret->name);
+xmlAddRef::31::71.7462::xmlFree(ret);
+xmlAddRef::32::47.0342::return(NULL);
+xmlValidateNotationUse::1::253.4958::xmlValidateNotationUse(xmlValidCtxtPtr ctxt, xmlDocPtr doc,
+xmlValidateNotationUse::2::230.0538::if ((doc == NULL) || (doc->intSubset == NULL) ||
+xmlValidateNotationUse::3::144.6149::(notationName == NULL)) return(-1);
+xmlValidateNotationUse::4::252.6930::notaDecl = xmlGetDtdNotationDesc(doc->intSubset, notationName);
+xmlValidateNotationUse::5::229.3221::if ((notaDecl == NULL) && (doc->extSubset != NULL))
+xmlValidateNotationUse::6::241.3764::notaDecl = xmlGetDtdNotationDesc(doc->extSubset, notationName);
+xmlValidateNotationUse::7::202.4194::if ((notaDecl == NULL) && (ctxt != NULL)) {
+xmlValidateNotationUse::8::289.3184::xmlErrValidNode(ctxt, (xmlNodePtr) doc, XML_DTD_UNKNOWN_NOTATION,
+xmlValidateNotationUse::9::43.0633::return(1);
+xmlValidGetValidElements::1::287.3413::xmlValidGetValidElements(xmlNode *prev, xmlNode *next, const xmlChar **names,
+xmlValidGetValidElements::2::145.2028::if (prev == NULL && next == NULL)
+xmlValidGetValidElements::3::71.7299::return(-1);
+xmlValidGetValidElements::4::140.2831::if (names == NULL) return(-1);
+xmlValidGetValidElements::5::135.3471::if (max <= 0) return(-1);
+xmlValidGetValidElements::6::199.6421::memset(&vctxt, 0, sizeof (xmlValidCtxt));
+xmlValidGetValidElements::7::128.4949::ref_node = prev ? prev : next;
+xmlValidGetValidElements::8::246.7806::if ((element_desc == NULL) && (parent->doc->extSubset != NULL))
+xmlValidGetValidElements::9::218.9359::element_desc = xmlGetDtdElementDesc(parent->doc->extSubset,
+xmlValidGetValidElements::10::154.0370::if (element_desc == NULL) return(-1);
+xmlValidGetValidElements::11::159.5523::prev_next = prev ? prev->next : NULL;
+xmlValidGetValidElements::12::158.2443::next_prev = next ? next->prev : NULL;
+xmlValidGetValidElements::13::66.9503::return(-1);
+xmlValidGetValidElements::14::104.7729::test_node->parent = parent;
+xmlValidGetValidElements::15::152.1536::if (prev) prev->next = test_node;
+xmlValidGetValidElements::16::117.6489::else parent->children = test_node;
+xmlValidGetValidElements::17::153.3584::if (next) next->prev = test_node;
+xmlValidGetValidElements::18::119.3823::else parent->last = test_node;
+xmlValidGetValidElements::19::218.2662::nb_elements = xmlValidGetPotentialChildren(element_desc->content,
+xmlValidGetValidElements::20::206.7146::for (i = 0;i < nb_elements;i++) {
+xmlValidGetValidElements::21::130.7542::test_node->name = elements[i];
+xmlValidGetValidElements::22::49.7080::int j;
+xmlValidGetValidElements::23::207.2618::for (j = 0; j < nb_valid_elements;j++)
+xmlValidGetValidElements::24::227.0202::if (xmlStrEqual(elements[i], names[j])) break;
+xmlValidGetValidElements::25::174.3733::names[nb_valid_elements++] = elements[i];
+xmlValidGetValidElements::26::154.1715::if (nb_valid_elements >= max) break;
+xmlValidGetValidElements::27::24.5577::}
+xmlValidGetValidElements::28::24.2832::}
+xmlValidGetValidElements::29::155.0285::if (prev) prev->next = prev_next;
+xmlValidGetValidElements::30::152.0786::if (next) next->prev = next_prev;
+xmlValidGetValidElements::31::94.5918::parent->children = parent_childs;
+xmlFreeValidCtxt::1::171.8865::xmlFreeValidCtxt(xmlValidCtxtPtr cur) {
+xmlFreeValidCtxt::2::114.5012::xmlFree(cur->vstateTab);
+xmlFreeValidCtxt::3::112.1723::if (cur->nodeTab != NULL)
+xmlFreeValidCtxt::4::86.5758::xmlFree(cur->nodeTab);
+xmlFreeNotation::1::164.0596::xmlFreeNotation(xmlNotationPtr nota) {
+xmlFreeNotation::2::122.1203::if (nota == NULL) return;
+xmlFreeNotation::3::121.8510::if (nota->name != NULL)
+xmlFreeNotation::4::149.2005::xmlFree((xmlChar *) nota->name);
+xmlFreeNotation::5::126.4912::if (nota->PublicID != NULL)
+xmlFreeNotation::6::154.5560::xmlFree((xmlChar *) nota->PublicID);
+xmlFreeNotation::7::116.8256::if (nota->SystemID != NULL)
+xmlFreeNotation::8::143.4351::xmlFree((xmlChar *) nota->SystemID);
+xmlFreeNotation::9::62.0113::xmlFree(nota);
+xmlValidateElement::1::318.1756::xmlValidateElement(xmlValidCtxtPtr ctxt, xmlDocPtr doc, xmlNodePtr elem) {
+xmlValidateElement::2::157.6943::if (elem == NULL) return(0);
+xmlValidateElement::3::244.8051::if ((elem->type == XML_XINCLUDE_START) ||
+xmlValidateElement::4::206.5701::(elem->type == XML_XINCLUDE_END) ||
+xmlValidateElement::5::198.0705::(elem->type == XML_NAMESPACE_DECL))
+xmlValidateElement::6::64.4689::return(1);
+xmlValidateElement::7::67.1651::CHECK_DTD;
+xmlValidateElement::8::212.9265::if (elem->type == XML_ENTITY_REF_NODE) {
+xmlValidateElement::9::67.8929::return(1);
+xmlValidateElement::10::205.2926::ret &= xmlValidateOneElement(ctxt, doc, elem);
+xmlValidateElement::11::93.0141::attr = elem->properties;
+xmlValidateElement::12::97.1053::while (attr != NULL) {
+xmlValidateElement::13::201.0947::value = xmlNodeListGetString(doc, attr->children, 0);
+xmlValidateElement::14::102.5696::xmlFree((char *)value);
+xmlValidateElement::15::98.3110::attr= attr->next;
+xmlValidateElement::16::100.5831::ns = elem->nsDef;
+xmlValidateElement::17::94.9464::while (ns != NULL) {
+xmlValidateElement::18::116.8272::if (elem->ns == NULL)
+xmlValidateElement::19::239.2143::ret &= xmlValidateOneNamespace(ctxt, doc, elem, NULL,
+xmlValidateElement::20::214.1454::ret &= xmlValidateOneNamespace(ctxt, doc, elem,
+xmlValidateElement::21::88.4262::ns = ns->next;
+xmlValidateElement::22::27.2732::}
+xmlValidateElement::23::91.1765::child = elem->children;
+xmlValidateElement::24::93.9168::while (child != NULL) {
+xmlValidateElement::25::168.3288::ret &= xmlValidateElement(ctxt, doc, child);
+xmlValidateElement::26::44.7961::return(ret);
+xmlDumpElementContent::1::264.1280::xmlDumpElementContent(xmlBufferPtr buf, xmlElementContentPtr content, int glob) {
+xmlDumpElementContent::2::115.2130::if (content == NULL) return;
+xmlDumpElementContent::3::195.2047::if (glob) xmlBufferWriteChar(buf, "(");
+xmlDumpElementContent::4::94.6543::switch (content->type) {
+xmlDumpElementContent::5::146.7267::xmlBufferWriteChar(buf, "#PCDATA");
+xmlDumpElementContent::6::114.3780::if (content->prefix != NULL) {
+xmlDumpElementContent::7::147.3573::xmlBufferWriteCHAR(buf, content->prefix);
+xmlDumpElementContent::8::141.9102::xmlBufferWriteCHAR(buf, content->name);
+xmlDumpElementContent::9::244.3259::if ((content->c1->type == XML_ELEMENT_CONTENT_OR) ||
+xmlDumpElementContent::10::235.9818::(content->c1->type == XML_ELEMENT_CONTENT_SEQ))
+xmlDumpElementContent::11::183.1851::xmlDumpElementContent(buf, content->c1, 1);
+xmlDumpElementContent::12::181.2018::xmlDumpElementContent(buf, content->c1, 0);
+xmlDumpElementContent::13::138.0697::xmlBufferWriteChar(buf, " , ");
+xmlDumpElementContent::14::246.4073::((content->c2->type == XML_ELEMENT_CONTENT_SEQ) &&
+xmlDumpElementContent::15::258.8085::(content->c2->ocur != XML_ELEMENT_CONTENT_ONCE)))
+xmlDumpElementContent::16::190.6616::xmlDumpElementContent(buf, content->c2, 1);
+xmlDumpElementContent::17::186.9776::xmlDumpElementContent(buf, content->c2, 0);
+xmlDumpElementContent::18::39.4287::break;
+xmlDumpElementContent::19::259.7545::if ((content->c1->type == XML_ELEMENT_CONTENT_OR) ||
+xmlDumpElementContent::20::239.4531::(content->c1->type == XML_ELEMENT_CONTENT_SEQ))
+xmlDumpElementContent::21::181.1976::xmlDumpElementContent(buf, content->c1, 1);
+xmlDumpElementContent::22::187.6613::xmlDumpElementContent(buf, content->c1, 0);
+xmlDumpElementContent::23::138.9396::xmlBufferWriteChar(buf, " | ");
+xmlDumpElementContent::24::246.1705::((content->c2->type == XML_ELEMENT_CONTENT_OR) &&
+xmlDumpElementContent::25::264.4305::(content->c2->ocur != XML_ELEMENT_CONTENT_ONCE)))
+xmlDumpElementContent::26::190.9012::xmlDumpElementContent(buf, content->c2, 1);
+xmlDumpElementContent::27::186.9905::xmlDumpElementContent(buf, content->c2, 0);
+xmlDumpElementContent::28::40.8379::break;
+xmlDumpElementContent::29::216.8636::xmlErrValid(NULL, XML_ERR_INTERNAL_ERROR,
+xmlDumpElementContent::30::72.1820::if (glob)
+xmlDumpElementContent::31::136.9820::xmlBufferWriteChar(buf, ")");
+xmlDumpElementContent::32::104.0171::switch (content->ocur) {
+xmlDumpElementContent::33::42.2362::break;
+xmlDumpElementContent::34::145.4631::xmlBufferWriteChar(buf, "?");
+xmlDumpElementContent::35::138.5531::xmlBufferWriteChar(buf, "*");
+xmlDumpElementContent::36::98.3615::xmlBufferWriteChar(buf, "+");
+xmlIsDocNameStartChar::1::196.0305::xmlIsDocNameStartChar(xmlDocPtr doc, int c) {
+xmlIsDocNameStartChar::2::295.3090::if ((doc == NULL) || (doc->properties & XML_DOC_OLD10) == 0) {
+xmlIsDocNameStartChar::3::232.3288::if (((c >= 'a') && (c <= 'z')) ||
+xmlIsDocNameStartChar::4::198.1741::((c >= 'A') && (c <= 'Z')) ||
+xmlIsDocNameStartChar::5::178.5626::(c == '_') || (c == ':') ||
+xmlIsDocNameStartChar::6::217.2351::((c >= 0xC0) && (c <= 0xD6)) ||
+xmlIsDocNameStartChar::7::223.4035::((c >= 0xD8) && (c <= 0xF6)) ||
+xmlIsDocNameStartChar::8::224.7858::((c >= 0xF8) && (c <= 0x2FF)) ||
+xmlIsDocNameStartChar::9::208.8106::((c >= 0x370) && (c <= 0x37D)) ||
+xmlIsDocNameStartChar::10::235.4855::((c >= 0x37F) && (c <= 0x1FFF)) ||
+xmlIsDocNameStartChar::11::218.9649::((c >= 0x200C) && (c <= 0x200D)) ||
+xmlIsDocNameStartChar::12::222.1825::((c >= 0x2070) && (c <= 0x218F)) ||
+xmlIsDocNameStartChar::13::243.4955::((c >= 0x2C00) && (c <= 0x2FEF)) ||
+xmlIsDocNameStartChar::14::237.9808::((c >= 0x3001) && (c <= 0xD7FF)) ||
+xmlIsDocNameStartChar::15::241.0246::((c >= 0xF900) && (c <= 0xFDCF)) ||
+xmlIsDocNameStartChar::16::233.8162::((c >= 0xFDF0) && (c <= 0xFFFD)) ||
+xmlIsDocNameStartChar::17::198.3010::((c >= 0x10000) && (c <= 0xEFFFF)))
+xmlIsDocNameStartChar::18::61.6862::return(1);
+xmlIsDocNameStartChar::19::47.2167::} else {
+xmlIsDocNameStartChar::20::252.3943::if (IS_LETTER(c) || (c == '_') || (c == ':'))
+xmlIsDocNameStartChar::21::57.1624::return(1);
+xmlIsDocNameStartChar::22::44.9373::return(0);
+xmlDumpElementTable::1::215.4487::xmlDumpElementTable(xmlBufferPtr buf, xmlElementTablePtr table) {
+xmlDumpElementTable::2::159.0663::if ((buf == NULL) || (table == NULL))
+xmlDumpElementTable::3::41.5482::return;
+xmlDumpElementTable::4::219.6275::xmlHashScan(table, (xmlHashScanner) xmlDumpElementDeclScan, buf);
+xmlValidateNotationCallback::1::248.9720::xmlValidateNotationCallback(xmlEntityPtr cur, xmlValidCtxtPtr ctxt,
+xmlValidateNotationCallback::2::44.0178::return;
+xmlValidateNotationCallback::3::294.3613::if (cur->etype == XML_EXTERNAL_GENERAL_UNPARSED_ENTITY) {
+xmlValidateNotationCallback::4::109.0996::xmlChar *notation = cur->content;
+xmlValidateNotationCallback::5::48.9139::int ret;
+xmlValidateNotationCallback::6::84.0351::ctxt->valid = 0;
+xmlValidateNotationCallback::7::23.5077::}
+xmlValidateNotationCallback::8::9.2782::}
+xmlFreeAttribute::1::141.1349::xmlFreeAttribute(xmlAttributePtr attr) {
+xmlFreeAttribute::2::111.5145::if (attr == NULL) return;
+xmlFreeAttribute::3::109.9828::if (attr->doc != NULL)
+xmlFreeAttribute::4::121.5518::dict = attr->doc->dict;
+xmlFreeAttribute::5::64.8326::dict = NULL;
+xmlFreeAttribute::6::159.5009::xmlUnlinkNode((xmlNodePtr) attr);
+xmlFreeAttribute::7::126.2627::xmlFreeEnumeration(attr->tree);
+xmlFreeAttribute::8::65.6520::if (dict) {
+xmlFreeAttribute::9::310.9113::if ((attr->elem != NULL) && (!xmlDictOwns(dict, attr->elem)))
+xmlFreeAttribute::10::153.6781::xmlFree((xmlChar *) attr->elem);
+xmlFreeAttribute::11::285.7333::if ((attr->name != NULL) && (!xmlDictOwns(dict, attr->name)))
+xmlFreeAttribute::12::141.7728::xmlFree((xmlChar *) attr->name);
+xmlFreeAttribute::13::280.9003::if ((attr->prefix != NULL) && (!xmlDictOwns(dict, attr->prefix)))
+xmlFreeAttribute::14::142.6008::xmlFree((xmlChar *) attr->prefix);
+xmlFreeAttribute::15::129.4537::if ((attr->defaultValue != NULL) &&
+xmlFreeAttribute::16::191.4677::(!xmlDictOwns(dict, attr->defaultValue)))
+xmlFreeAttribute::17::149.6354::xmlFree((xmlChar *) attr->defaultValue);
+xmlFreeAttribute::18::47.1304::} else {
+xmlFreeAttribute::19::116.0413::if (attr->elem != NULL)
+xmlFreeAttribute::20::157.1765::xmlFree((xmlChar *) attr->elem);
+xmlFreeAttribute::21::101.9615::if (attr->name != NULL)
+xmlFreeAttribute::22::143.9037::xmlFree((xmlChar *) attr->name);
+xmlFreeAttribute::23::111.2449::if (attr->defaultValue != NULL)
+xmlFreeAttribute::24::147.3715::xmlFree((xmlChar *) attr->defaultValue);
+xmlFreeAttribute::25::98.6557::if (attr->prefix != NULL)
+xmlFreeAttribute::26::129.5496::xmlFree((xmlChar *) attr->prefix);
+xmlFreeAttribute::27::50.2705::xmlFree(attr);
+xmlCopyAttribute::1::146.5981::xmlCopyAttribute(xmlAttributePtr attr) {
+xmlCopyAttribute::2::156.7598::xmlVErrMemory(NULL, "malloc failed");
+xmlCopyAttribute::3::169.3916::memset(cur, 0, sizeof(xmlAttribute));
+xmlCopyAttribute::4::187.7995::cur->elem = xmlStrdup(attr->elem);
+xmlCopyAttribute::5::108.0205::if (attr->name != NULL)
+xmlCopyAttribute::6::153.5389::cur->name = xmlStrdup(attr->name);
+xmlCopyAttribute::7::103.4581::if (attr->prefix != NULL)
+xmlCopyAttribute::8::151.1651::cur->prefix = xmlStrdup(attr->prefix);
+xmlCopyAttribute::9::108.2681::if (attr->defaultValue != NULL)
+xmlCopyAttribute::10::168.2945::cur->defaultValue = xmlStrdup(attr->defaultValue);
+xmlCopyAttribute::11::46.4945::return(cur);
+xmlValidateOneAttribute::1::237.2000::xmlValidateOneAttribute(xmlValidCtxtPtr ctxt, xmlDocPtr doc,
+xmlValidateOneAttribute::2::70.9274::CHECK_DTD;
+xmlValidateOneAttribute::3::277.0089::if ((elem == NULL) || (elem->name == NULL)) return(0);
+xmlValidateOneAttribute::4::248.2841::if ((attr == NULL) || (attr->name == NULL)) return(0);
+xmlValidateOneAttribute::5::262.5507::if ((elem->ns != NULL) && (elem->ns->prefix != NULL)) {
+xmlValidateOneAttribute::6::79.8955::xmlChar fn[50];
+xmlValidateOneAttribute::7::64.4659::return(0);
+xmlValidateOneAttribute::8::114.5093::if (attr->ns != NULL) {
+xmlValidateOneAttribute::9::241.4438::attrDecl = xmlGetDtdQAttrDesc(doc->intSubset, fullname,
+xmlValidateOneAttribute::10::216.6160::if ((attrDecl == NULL) && (doc->extSubset != NULL))
+xmlValidateOneAttribute::11::235.2245::attrDecl = xmlGetDtdQAttrDesc(doc->extSubset, fullname,
+xmlValidateOneAttribute::12::50.3125::} else {
+xmlValidateOneAttribute::13::286.1796::attrDecl = xmlGetDtdAttrDesc(doc->intSubset, fullname, attr->name);
+xmlValidateOneAttribute::14::220.8012::if ((attrDecl == NULL) && (doc->extSubset != NULL))
+xmlValidateOneAttribute::15::200.6543::attrDecl = xmlGetDtdAttrDesc(doc->extSubset,
+xmlValidateOneAttribute::16::225.8897::if ((fullname != fn) && (fullname != elem->name))
+xmlValidateOneAttribute::17::90.2887::xmlFree(fullname);
+xmlValidateOneAttribute::18::27.0385::}
+xmlValidateOneAttribute::19::105.3792::if (attrDecl == NULL) {
+xmlValidateOneAttribute::20::118.4069::if (attr->ns != NULL) {
+xmlValidateOneAttribute::21::260.6728::attrDecl = xmlGetDtdQAttrDesc(doc->intSubset, elem->name,
+xmlValidateOneAttribute::22::217.4206::if ((attrDecl == NULL) && (doc->extSubset != NULL))
+xmlValidateOneAttribute::23::264.7663::attrDecl = xmlGetDtdQAttrDesc(doc->extSubset, elem->name,
+xmlValidateOneAttribute::24::50.0530::} else {
+xmlValidateOneAttribute::25::203.3892::attrDecl = xmlGetDtdAttrDesc(doc->intSubset,
+xmlValidateOneAttribute::26::229.0616::if ((attrDecl == NULL) && (doc->extSubset != NULL))
+xmlValidateOneAttribute::27::204.5266::attrDecl = xmlGetDtdAttrDesc(doc->extSubset,
+xmlValidateOneAttribute::28::26.2118::}
+xmlValidateOneAttribute::29::110.4729::if (attrDecl == NULL) {
+xmlValidateOneAttribute::30::298.1170::xmlErrValidNode(ctxt, elem, XML_DTD_UNKNOWN_ATTRIBUTE,
+xmlValidateOneAttribute::31::151.8409::attr->atype = attrDecl->atype;
+xmlValidateOneAttribute::32::280.5492::xmlErrValidNode(ctxt, elem, XML_DTD_ATTRIBUTE_VALUE,
+xmlValidateOneAttribute::33::228.3087::if (attrDecl->def == XML_ATTRIBUTE_FIXED) {
+xmlValidateOneAttribute::34::96.9376::if (!xmlStrEqual(value, attrDecl->defaultValue)) {
+xmlValidateOneAttribute::35::319.8753::xmlErrValidNode(ctxt, elem, XML_DTD_ATTRIBUTE_DEFAULT,
+xmlValidateOneAttribute::36::28.9985::}
+xmlValidateOneAttribute::37::231.3860::if (attrDecl->atype == XML_ATTRIBUTE_ID) {
+xmlValidateOneAttribute::38::239.8155::if (xmlAddID(ctxt, doc, value, attr) == NULL)
+xmlValidateOneAttribute::39::60.7760::ret = 0;
+xmlValidateOneAttribute::40::26.9928::}
+xmlValidateOneAttribute::41::238.8687::if ((attrDecl->atype == XML_ATTRIBUTE_IDREF) ||
+xmlValidateOneAttribute::42::234.3371::(attrDecl->atype == XML_ATTRIBUTE_IDREFS)) {
+xmlValidateOneAttribute::43::229.6808::if (xmlAddRef(ctxt, doc, value, attr) == NULL)
+xmlValidateOneAttribute::44::59.3635::ret = 0;
+xmlValidateOneAttribute::45::27.9035::}
+xmlValidateOneAttribute::46::229.5327::if (attrDecl->atype == XML_ATTRIBUTE_NOTATION) {
+xmlValidateOneAttribute::47::157.1528::xmlEnumerationPtr tree = attrDecl->tree;
+xmlValidateOneAttribute::48::224.8760::nota = xmlGetDtdNotationDesc(doc->extSubset, value);
+xmlValidateOneAttribute::49::105.3350::if (nota == NULL) {
+xmlValidateOneAttribute::50::278.0334::xmlErrValidNode(ctxt, elem, XML_DTD_UNKNOWN_NOTATION,
+xmlValidateOneAttribute::51::99.1187::while (tree != NULL) {
+xmlValidateOneAttribute::52::194.1529::if (xmlStrEqual(tree->name, value)) break;
+xmlValidateOneAttribute::53::84.0561::tree = tree->next;
+xmlValidateOneAttribute::54::95.3879::if (tree == NULL) {
+xmlValidateOneAttribute::55::262.3522::xmlErrValidNode(ctxt, elem, XML_DTD_NOTATION_VALUE,
+xmlValidateOneAttribute::56::26.4754::}
+xmlValidateOneAttribute::57::250.3347::if (attrDecl->atype == XML_ATTRIBUTE_ENUMERATION) {
+xmlValidateOneAttribute::58::155.8448::xmlEnumerationPtr tree = attrDecl->tree;
+xmlValidateOneAttribute::59::101.5075::while (tree != NULL) {
+xmlValidateOneAttribute::60::188.8284::if (xmlStrEqual(tree->name, value)) break;
+xmlValidateOneAttribute::61::83.9262::tree = tree->next;
+xmlValidateOneAttribute::62::97.5845::if (tree == NULL) {
+xmlValidateOneAttribute::63::288.1986::xmlErrValidNode(ctxt, elem, XML_DTD_ATTRIBUTE_VALUE,
+xmlValidateOneAttribute::64::26.7377::}
+xmlValidateOneAttribute::65::232.1111::if ((attrDecl->def == XML_ATTRIBUTE_FIXED) &&
+xmlValidateOneAttribute::66::209.8575::(!xmlStrEqual(attrDecl->defaultValue, value))) {
+xmlValidateOneAttribute::67::287.7870::xmlErrValidNode(ctxt, elem, XML_DTD_ATTRIBUTE_VALUE,
+xmlValidateOneAttribute::68::217.0019::ret &= xmlValidateAttributeValue2(ctxt, doc, attr->name,
+xmlValidateNameValueInternal::1::225.4938::xmlValidateNameValueInternal(xmlDocPtr doc, const xmlChar *value) {
+xmlValidateNameValueInternal::2::140.5340::if (value == NULL) return(0);
+xmlValidateNameValueInternal::3::63.4854::cur = value;
+xmlValidateNameValueInternal::4::70.4566::return(0);
+xmlValidateNameValueInternal::5::174.6642::val = xmlStringCurrentChar(NULL, cur, &len);
+xmlValidateNameValueInternal::6::154.7533::while (xmlIsDocNameChar(doc, val)) {
+xmlValidateNameValueInternal::7::160.7858::val = xmlStringCurrentChar(NULL, cur, &len);
+xmlValidateNameValueInternal::8::121.3539::if (val != 0) return(0);
+xmlValidateNameValueInternal::9::42.2446::return(1);
+xmlGetDtdAttrDesc::1::355.2359::xmlGetDtdAttrDesc(xmlDtdPtr dtd, const xmlChar *elem, const xmlChar *name) {
+xmlGetDtdAttrDesc::2::156.9405::if (dtd == NULL) return(NULL);
+xmlGetDtdAttrDesc::3::187.7957::if (dtd->attributes == NULL) return(NULL);
+xmlGetDtdAttrDesc::4::166.5399::table = (xmlAttributeTablePtr) dtd->attributes;
+xmlGetDtdAttrDesc::5::68.5563::return(NULL);
+xmlGetDtdAttrDesc::6::179.9384::uqname = xmlSplitQName2(name, &prefix);
+xmlGetDtdAttrDesc::7::221.6186::cur = xmlHashLookup3(table, uqname, prefix, elem);
+xmlGetDtdAttrDesc::8::145.1410::if (prefix != NULL) xmlFree(prefix);
+xmlGetDtdAttrDesc::9::176.9274::if (uqname != NULL) xmlFree(uqname);
+xmlGetDtdAttrDesc::10::37.4375::} else
+xmlGetDtdAttrDesc::11::184.9237::cur = xmlHashLookup3(table, name, NULL, elem);
+xmlGetDtdAttrDesc::12::45.4723::return(cur);
+xmlValidateElementContent::1::231.4843::xmlValidateElementContent(xmlValidCtxtPtr ctxt, xmlNodePtr child,
+xmlValidateElementContent::2::277.9716::if ((elemDecl == NULL) || (parent == NULL) || (ctxt == NULL))
+xmlValidateElementContent::3::68.0715::return(-1);
+xmlValidateElementContent::4::101.2808::cont = elemDecl->content;
+xmlValidateElementContent::5::177.3839::ret = xmlValidBuildContentModel(ctxt, elemDecl);
+xmlValidateElementContent::6::141.9623::if (elemDecl->contModel == NULL) {
+xmlValidateElementContent::7::65.5963::return(-1);
+xmlValidateElementContent::8::97.3728::xmlRegExecCtxtPtr exec;
+xmlValidateElementContent::9::60.7869::return(-1);
+xmlValidateElementContent::10::98.9142::ctxt->nodeMax = 0;
+xmlValidateElementContent::11::58.9500::cur = child;
+xmlValidateElementContent::12::96.2391::while (cur != NULL) {
+xmlValidateElementContent::13::89.6512::switch (cur->type) {
+xmlValidateElementContent::14::125.0150::if ((cur->children != NULL) &&
+xmlValidateElementContent::15::134.1884::(cur->children->children != NULL)) {
+xmlValidateElementContent::16::113.1826::nodeVPush(ctxt, cur);
+xmlValidateElementContent::17::38.1961::break;
+xmlValidateElementContent::18::124.5482::if (xmlIsBlankNode(cur))
+xmlValidateElementContent::19::40.7488::break;
+xmlValidateElementContent::20::57.2571::ret = 0;
+xmlValidateElementContent::21::55.8067::ret = 0;
+xmlValidateElementContent::22::236.4633::if ((cur->ns != NULL) && (cur->ns->prefix != NULL)) {
+xmlValidateElementContent::23::80.9933::xmlChar fn[50];
+xmlValidateElementContent::24::67.7538::ret = -1;
+xmlValidateElementContent::25::182.7823::ret = xmlRegExecPushString(exec, fullname, NULL);
+xmlValidateElementContent::26::212.0552::if ((fullname != fn) && (fullname != cur->name))
+xmlValidateElementContent::27::87.8150::xmlFree(fullname);
+xmlValidateElementContent::28::47.9498::} else {
+xmlValidateElementContent::29::197.7066::ret = xmlRegExecPushString(exec, cur->name, NULL);
+xmlValidateElementContent::30::38.2441::break;
+xmlValidateElementContent::31::39.1788::break;
+xmlValidateElementContent::32::83.2723::cur = cur->next;
+xmlValidateElementContent::33::96.3375::while (cur == NULL) {
+xmlValidateElementContent::34::111.9582::cur = nodeVPop(ctxt);
+xmlValidateElementContent::35::38.2359::break;
+xmlValidateElementContent::36::83.3555::cur = cur->next;
+xmlValidateElementContent::37::174.3302::ret = xmlRegExecPushString(exec, NULL, NULL);
+xmlValidateElementContent::38::113.7528::xmlRegFreeExecCtxt(exec);
+xmlValidateElementContent::39::236.8989::if ((warn) && ((ret != 1) && (ret != -3))) {
+xmlValidateElementContent::40::104.5833::if (ctxt != NULL) {
+xmlValidateElementContent::41::74.7096::char expr[5000];
+xmlValidateElementContent::42::258.2154::xmlErrValidNode(ctxt, parent, XML_DTD_CONTENT_MODEL,
+xmlValidateElementContent::43::258.9551::xmlErrValidNode(ctxt, parent, XML_DTD_CONTENT_MODEL,
+xmlValidateElementContent::44::50.1479::} else {
+xmlValidateElementContent::45::98.6967::if (name != NULL) {
+xmlValidateElementContent::46::261.7969::xmlErrValidNode(ctxt, parent, XML_DTD_CONTENT_MODEL,
+xmlValidateElementContent::47::268.6311::xmlErrValidNode(ctxt, parent, XML_DTD_CONTENT_MODEL,
+xmlValidateElementContent::48::63.2403::ret = 0;
+xmlValidateElementContent::49::94.9872::if (ret == -3)
+xmlValidateElementContent::50::61.1895::ret = 1;
+xmlValidateElementContent::51::21.2127::ctxt->nodeMax = 0;
+xmlAddRef::1::283.5717::xmlAddRef(xmlValidCtxtPtr ctxt, xmlDocPtr doc, const xmlChar *value,
+xmlAddRef::2::75.1079::return(NULL);
+xmlAddRef::3::99.5161::if (value == NULL) {
+xmlAddRef::4::74.4607::return(NULL);
+xmlAddRef::5::100.2503::if (attr == NULL) {
+xmlAddRef::6::72.8582::return(NULL);
+xmlAddRef::7::161.5318::table = (xmlRefTablePtr) doc->refs;
+xmlAddRef::8::224.2728::doc->refs = table = xmlHashCreateDict(0, doc->dict);
+xmlAddRef::9::93.6295::if (table == NULL) {
+xmlAddRef::10::101.8713::xmlVErrMemory(ctxt,
+xmlAddRef::11::218.2621::ret = (xmlRefPtr) xmlMalloc(sizeof(xmlRef));
+xmlAddRef::12::162.9993::xmlVErrMemory(ctxt, "malloc failed");
+xmlAddRef::13::136.9154::ret->value = xmlStrdup(value);
+xmlAddRef::14::237.4514::if ((ctxt != NULL) && (ctxt->vstateNr != 0)) {
+xmlAddRef::15::163.7675::ret->name = xmlStrdup(attr->name);
+xmlAddRef::16::84.8453::ret->name = NULL;
+xmlAddRef::17::176.2567::ret->lineno = xmlGetLineNo(attr->parent);
+xmlAddRef::18::278.3838::if (NULL == (ref_list = xmlListCreate(xmlFreeRef, xmlDummyCompare))) {
+xmlAddRef::19::216.8588::xmlErrValid(NULL, XML_ERR_INTERNAL_ERROR,
+xmlAddRef::20::223.0087::if (xmlHashAddEntry(table, value, ref_list) < 0) {
+xmlAddRef::21::107.8909::xmlListDelete(ref_list);
+xmlAddRef::22::27.7471::}
+xmlAddRef::23::201.0310::if (xmlListAppend(ref_list, ret) != 0) {
+xmlAddRef::24::202.3536::xmlErrValid(NULL, XML_ERR_INTERNAL_ERROR,
+xmlAddRef::25::64.5075::return(ret);
+xmlAddRef::26::93.3576::if (ret != NULL) {
+xmlAddRef::27::103.3814::if (ret->value != NULL)
+xmlAddRef::28::120.8020::xmlFree((char *)ret->value);
+xmlAddRef::29::102.6470::if (ret->name != NULL)
+xmlAddRef::30::123.3394::xmlFree((char *)ret->name);
+xmlAddRef::31::71.7462::xmlFree(ret);
+xmlAddRef::32::47.0342::return(NULL);
+xmlValidateNotationUse::1::253.4958::xmlValidateNotationUse(xmlValidCtxtPtr ctxt, xmlDocPtr doc,
+xmlValidateNotationUse::2::230.0538::if ((doc == NULL) || (doc->intSubset == NULL) ||
+xmlValidateNotationUse::3::144.6149::(notationName == NULL)) return(-1);
+xmlValidateNotationUse::4::252.6930::notaDecl = xmlGetDtdNotationDesc(doc->intSubset, notationName);
+xmlValidateNotationUse::5::229.3221::if ((notaDecl == NULL) && (doc->extSubset != NULL))
+xmlValidateNotationUse::6::241.3764::notaDecl = xmlGetDtdNotationDesc(doc->extSubset, notationName);
+xmlValidateNotationUse::7::202.4194::if ((notaDecl == NULL) && (ctxt != NULL)) {
+xmlValidateNotationUse::8::289.3184::xmlErrValidNode(ctxt, (xmlNodePtr) doc, XML_DTD_UNKNOWN_NOTATION,
+xmlValidateNotationUse::9::43.0633::return(1);
+xmlValidGetValidElements::1::287.3413::xmlValidGetValidElements(xmlNode *prev, xmlNode *next, const xmlChar **names,
+xmlValidGetValidElements::2::145.2028::if (prev == NULL && next == NULL)
+xmlValidGetValidElements::3::71.7299::return(-1);
+xmlValidGetValidElements::4::140.2831::if (names == NULL) return(-1);
+xmlValidGetValidElements::5::135.3471::if (max <= 0) return(-1);
+xmlValidGetValidElements::6::199.6421::memset(&vctxt, 0, sizeof (xmlValidCtxt));
+xmlValidGetValidElements::7::128.4949::ref_node = prev ? prev : next;
+xmlValidGetValidElements::8::246.7806::if ((element_desc == NULL) && (parent->doc->extSubset != NULL))
+xmlValidGetValidElements::9::218.9359::element_desc = xmlGetDtdElementDesc(parent->doc->extSubset,
+xmlValidGetValidElements::10::154.0370::if (element_desc == NULL) return(-1);
+xmlValidGetValidElements::11::159.5523::prev_next = prev ? prev->next : NULL;
+xmlValidGetValidElements::12::158.2443::next_prev = next ? next->prev : NULL;
+xmlValidGetValidElements::13::66.9503::return(-1);
+xmlValidGetValidElements::14::104.7729::test_node->parent = parent;
+xmlValidGetValidElements::15::152.1536::if (prev) prev->next = test_node;
+xmlValidGetValidElements::16::117.6489::else parent->children = test_node;
+xmlValidGetValidElements::17::153.3584::if (next) next->prev = test_node;
+xmlValidGetValidElements::18::119.3823::else parent->last = test_node;
+xmlValidGetValidElements::19::218.2662::nb_elements = xmlValidGetPotentialChildren(element_desc->content,
+xmlValidGetValidElements::20::206.7146::for (i = 0;i < nb_elements;i++) {
+xmlValidGetValidElements::21::130.7542::test_node->name = elements[i];
+xmlValidGetValidElements::22::49.7080::int j;
+xmlValidGetValidElements::23::207.2618::for (j = 0; j < nb_valid_elements;j++)
+xmlValidGetValidElements::24::227.0202::if (xmlStrEqual(elements[i], names[j])) break;
+xmlValidGetValidElements::25::174.3733::names[nb_valid_elements++] = elements[i];
+xmlValidGetValidElements::26::154.1715::if (nb_valid_elements >= max) break;
+xmlValidGetValidElements::27::24.5577::}
+xmlValidGetValidElements::28::24.2832::}
+xmlValidGetValidElements::29::155.0285::if (prev) prev->next = prev_next;
+xmlValidGetValidElements::30::152.0786::if (next) next->prev = next_prev;
+xmlValidGetValidElements::31::94.5918::parent->children = parent_childs;
+xmlFreeValidCtxt::1::171.8865::xmlFreeValidCtxt(xmlValidCtxtPtr cur) {
+xmlFreeValidCtxt::2::114.5012::xmlFree(cur->vstateTab);
+xmlFreeValidCtxt::3::112.1723::if (cur->nodeTab != NULL)
+xmlFreeValidCtxt::4::86.5758::xmlFree(cur->nodeTab);
+xmlFreeNotation::1::164.0596::xmlFreeNotation(xmlNotationPtr nota) {
+xmlFreeNotation::2::122.1203::if (nota == NULL) return;
+xmlFreeNotation::3::121.8510::if (nota->name != NULL)
+xmlFreeNotation::4::149.2005::xmlFree((xmlChar *) nota->name);
+xmlFreeNotation::5::126.4912::if (nota->PublicID != NULL)
+xmlFreeNotation::6::154.5560::xmlFree((xmlChar *) nota->PublicID);
+xmlFreeNotation::7::116.8256::if (nota->SystemID != NULL)
+xmlFreeNotation::8::143.4351::xmlFree((xmlChar *) nota->SystemID);
+xmlFreeNotation::9::62.0113::xmlFree(nota);
+xmlValidateElement::1::318.1756::xmlValidateElement(xmlValidCtxtPtr ctxt, xmlDocPtr doc, xmlNodePtr elem) {
+xmlValidateElement::2::157.6943::if (elem == NULL) return(0);
+xmlValidateElement::3::244.8051::if ((elem->type == XML_XINCLUDE_START) ||
+xmlValidateElement::4::206.5701::(elem->type == XML_XINCLUDE_END) ||
+xmlValidateElement::5::198.0705::(elem->type == XML_NAMESPACE_DECL))
+xmlValidateElement::6::64.4689::return(1);
+xmlValidateElement::7::67.1651::CHECK_DTD;
+xmlValidateElement::8::212.9265::if (elem->type == XML_ENTITY_REF_NODE) {
+xmlValidateElement::9::67.8929::return(1);
+xmlValidateElement::10::205.2926::ret &= xmlValidateOneElement(ctxt, doc, elem);
+xmlValidateElement::11::93.0141::attr = elem->properties;
+xmlValidateElement::12::97.1053::while (attr != NULL) {
+xmlValidateElement::13::201.0947::value = xmlNodeListGetString(doc, attr->children, 0);
+xmlValidateElement::14::102.5696::xmlFree((char *)value);
+xmlValidateElement::15::98.3110::attr= attr->next;
+xmlValidateElement::16::100.5831::ns = elem->nsDef;
+xmlValidateElement::17::94.9464::while (ns != NULL) {
+xmlValidateElement::18::116.8272::if (elem->ns == NULL)
+xmlValidateElement::19::239.2143::ret &= xmlValidateOneNamespace(ctxt, doc, elem, NULL,
+xmlValidateElement::20::214.1454::ret &= xmlValidateOneNamespace(ctxt, doc, elem,
+xmlValidateElement::21::88.4262::ns = ns->next;
+xmlValidateElement::22::27.2732::}
+xmlValidateElement::23::91.1765::child = elem->children;
+xmlValidateElement::24::93.9168::while (child != NULL) {
+xmlValidateElement::25::168.3288::ret &= xmlValidateElement(ctxt, doc, child);
+xmlValidateElement::26::44.7961::return(ret);

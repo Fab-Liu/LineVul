@@ -122,36 +122,33 @@ def set_seed(args):
 
 
 def inference(input_text, model, tokenizer, args):
-
+    
     # 初始化参数
     no_decay = ['bias', 'LayerNorm.weight']
     optimizer_grouped_parameters = [
         {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
          'weight_decay': args.weight_decay},
-        {'params': [p for n, p in model.named_parameters() if any(
-            nd in n for nd in no_decay)], 'weight_decay': 0.0}
+        {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
     ]
 
     # 初始化优化器和学习率衰减函数
-    optimizer = torch.optim.AdamW(
-        optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+    optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.warmup_steps,
                                                 num_training_steps=args.max_steps)
 
     # 多GPU计算
-    # if args.n_gpu > 1:
+    #if args.n_gpu > 1:
     #    model = torch.nn.DataParallel(model)
 
-    inputs = tokenizer(input_text, return_tensors="pt",
-                       padding=True, truncation=True)
-
+    inputs  = tokenizer(input_text, return_tensors="pt", padding=True, truncation=True)
+    
     # 获取输入张量
     input_ids = inputs["input_ids"].to(model.device)
     labels = inputs.get("labels", None)
 
     # 模型推理
     with torch.no_grad():
-        # lm_loss, logit = model(input_ids=input_ids, labels=labels)
+        #lm_loss, logit = model(input_ids=input_ids, labels=labels)
         logit = model(input_ids=input_ids, labels=labels)
 
     '''
@@ -165,6 +162,7 @@ def inference(input_text, model, tokenizer, args):
 
     # 计算预测
     logits = logit.cpu().numpy()
+    confidence = logits[:, 1]
     y_preds = logits[:, 1] > 0.5
 
     '''
@@ -189,26 +187,24 @@ def inference(input_text, model, tokenizer, args):
 
     # 定义推断方法
     if args.reasoning_method == "all":
-        all_reasoning_method = [
-            "attention", "lig", "saliency", "deeplift", "deeplift_shap", "gradient_shap"]
+            all_reasoning_method = ["attention", "lig", "saliency", "deeplift", "deeplift_shap", "gradient_shap"]
     else:
         all_reasoning_method = [args.reasoning_method]
 
-    # 两个模型传递函数
 
+    # 两个模型传递函数
     def predict(input_ids):
         return model(input_ids=input_ids)[0]
 
     def lig_forward(input_ids):
         logits = model(input_ids=input_ids)[0]
-        y_pred = 1  # for positive attribution, y_pred = 0 for negative attribution
+        y_pred = 1 # for positive attribution, y_pred = 0 for negative attribution
         pred_prob = logits[y_pred].unsqueeze(-1)
         return pred_prob
-
+    
     flaw_line_seperator = "/~/"
     # 分词并转换为整数ID
-    encoding = tokenizer(input_text, padding=True,
-                         truncation=True, return_tensors="pt")
+    encoding = tokenizer(input_text, padding=True, truncation=True, return_tensors="pt")
     # 获取整数ID
     input_ids = encoding['input_ids']
     all_tokens = tokenizer.convert_ids_to_tokens(input_ids[0])
@@ -216,10 +212,8 @@ def inference(input_text, model, tokenizer, args):
     all_tokens = [token.replace("ĉ", "Ċ") for token in all_tokens]
     original_lines = ''.join(all_tokens).split("Ċ")
 
-    flaw_lines = get_all_flaw_lines(
-        flaw_lines=original_lines, flaw_line_seperator=flaw_line_seperator)
-    flaw_tokens_encoded = encode_all_lines(
-        all_lines=flaw_lines, tokenizer=tokenizer)
+    flaw_lines = get_all_flaw_lines(flaw_lines=original_lines, flaw_line_seperator=flaw_line_seperator)
+    flaw_tokens_encoded = encode_all_lines(all_lines=flaw_lines, tokenizer=tokenizer)
     verified_flaw_lines = []
     for i in range(len(flaw_tokens_encoded)):
         encoded_flaw = ''.join(flaw_tokens_encoded[i])
@@ -233,8 +227,7 @@ def inference(input_text, model, tokenizer, args):
         model.to(args.device)
         input_ids.to(args.device)
         with torch.no_grad():
-            prob, attentions = model(
-                input_ids=input_ids, output_attentions=True)
+            prob, attentions = model(input_ids=input_ids, output_attentions=True)
         attentions = attentions[0][0]
         attention = None
         for i in range(len(attentions)):
@@ -245,14 +238,12 @@ def inference(input_text, model, tokenizer, args):
             else:
                 attention += layer_attention
         attention = clean_special_token_values(attention, padding=True)
-        word_att_scores = get_word_att_scores(
-            all_tokens=all_tokens, att_scores=attention)
-        all_lines_score, flaw_line_indices = get_all_lines_score(
-            word_att_scores, verified_flaw_lines)
+        word_att_scores = get_word_att_scores(all_tokens=all_tokens, att_scores=attention)
+        all_lines_score, flaw_line_indices = get_all_lines_score(word_att_scores, verified_flaw_lines)
 
     # 输出结果
     # logits
-    return logits, y_preds, all_lines_score, flaw_line_indices
+    return logits, y_preds, confidence , all_lines_score, flaw_line_indices
 
 
 def train(args, train_dataset, model, tokenizer, eval_dataset):
@@ -1540,7 +1531,7 @@ def new_main():
     get inference text from args.inference_text
     peek to inference
     '''
-    with open("/home/wangbin/LineVul/linevul/test/concatenated_code_and_lines.json", "r") as f:
+    with open("C:\Github Repository\LineVul\linevul\\test\concatenated_code_and_lines.json", "r") as f:
         concatenated_data = json.load(f)
 
     func_list = []  # 用于保存函数名的列表
@@ -1557,9 +1548,8 @@ def new_main():
     # 获取函数的代码和行信息
     for filename, functions in concatenated_data.items():
         for func_name in functions:
-
-#func_code functions[func_name]['code']
-
+            #func_code functions[func_name]['code']
+            print("=====================================================")
             inputs = tokenizer(functions[func_name]['code'], return_tensors="pt", padding=True, truncation=True)
 
             split_funcs, split_funcs_lines_info = split_input_by_lines_for_bert(functions[func_name]['code'], tokenizer)  # 假设这是一个用于拆分函数代码的函数
@@ -1569,7 +1559,11 @@ def new_main():
                 this_func_part_line_num = split_funcs_lines_info[index]
                 func_part = extract_lines(functions[func_name]['code'], base_line_num, base_line_num + this_func_part_line_num - 1)  # 假设这是一个用于提取代码行的函数
                 
-                logits, y_preds, all_lines_score, flaw_line_indices = inference(func_part, model, tokenizer, args)  # 假设这是一个用于模型推理的函数
+                logits, y_preds, confidence, all_lines_score, flaw_line_indices = inference(func_part, model, tokenizer, args)  # 假设这是一个用于模型推理的函数
+                print(f"***********************{func_name}****************************")
+                print('logits: ', logits)
+                print('y_preds: ', y_preds)
+                print('confidence: ', confidence)
                 format_function_output(func_name, functions[func_name]['code'], all_lines_score, base_line_num)  # 假设这是一个用于格式化输出的函数
                 
                 base_line_num += this_func_part_line_num
