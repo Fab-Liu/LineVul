@@ -285,7 +285,9 @@ def test(args, model, tokenizer, test_dataset, best_threshold=0.5):
             eval_loss += lm_loss.mean().item()
             logits.append(logit.cpu().numpy())
             y_trues.append(labels.cpu().numpy())
+      
         nb_eval_steps += 1
+
     # calculate scores
     logits = np.concatenate(logits, 0)
     y_trues = np.concatenate(y_trues, 0)
@@ -295,10 +297,22 @@ def test(args, model, tokenizer, test_dataset, best_threshold=0.5):
     precision = precision_score(y_trues, y_preds)   
     f1 = f1_score(y_trues, y_preds) 
 
-    if y_trues == y_preds:
-        pred_success += 1
-    if y_trues != y_preds:
-        pred_fail += 1
+    print("y_trues: ", y_trues)
+    print("y_preds: ", y_preds)
+  
+
+    for i in range(len(y_trues)):
+        if str(y_trues[i]) == '0' and y_preds[i] == False:
+            global pred_success
+            pred_success += 1
+        else:
+            print("fail y_trues[i]: ", y_trues[i])
+            print("fail y_preds[i]: ", y_preds[i])
+            global pred_fail
+            pred_fail += 1
+
+    print("pred_success: ", pred_success)
+    print("pred_fail: ", pred_fail)
 
     result = {
         "test_accuracy": float(acc),

@@ -25,7 +25,7 @@
                 "--eval_data_file",
                 "C:\\Github Repository\\LineVul\\data\\big-vul_dataset\\valFuzz.csv",
                 "--test_data_file",
-                "C:\\Github Repository\\LineVul\\data\\cwe_category\\CWE_20_16413.csv",
+                "C:\\Github Repository\\LineVul\\data\\cwe_category\\CWE_787_2327.csv",
                 "--epochs",
                 "1",
                 "--learning_rate",
