@@ -1379,21 +1379,22 @@ def format_function_output(function_name,input_text, weights,base_line_num=1):
         return "Function name not found!"
     with open("targetscore.txt", "a+") as file:
         # 添加标题行
+        print(f"lines : {lines} ")
+        print(f"weights : {weights} ")
+        print(f"len(lines : {len(lines)}")
+        print(f"len(weights): {len(weights)}")
+        # print(f"{function_name}: output written to targetscore.txt")
+
         #file.write("文本:行数:权重信息\n")
         for index, value in enumerate(weights):
+            print(f"index : {index} ")
+            print(f"base_line_num : {base_line_num} ")
+            print(f"index+base_line_num : {index+base_line_num} ")
             #文本:行数:权重信息\n
             formatted_output = f"{function_name}::{base_line_num+index}::{value:.4f}::{lines[base_line_num+index-1]}\n"
             file.write(formatted_output)
         print(f"{function_name}: output written to targetscore.txt")
     return formatted_output,"Output written to tagetscore.txt"
-
-
-
-
-
-
-
-
 
 def new_main():
     parser = argparse.ArgumentParser()
@@ -1534,7 +1535,7 @@ def new_main():
 
     # temp_test是函数读取的数据集
     #with open("/home/wangbin/LineVul/linevul/temp_test.csv", "r", encoding="utf-8") as f:
-    # with open("/accuracyfuzz/TargetLocalization/LineVul/linevul/temp_test.csv", "r", encoding="utf-8") as f:
+    # with open("/accuracyfuzz/TargetLocalization/LineVul/linevul/smalldb_test.csv", "r", encoding="utf-8") as f:
     with open("C:\Github Repository\LineVul\data\\big-vul_dataset\\temp_test.csv", "r", encoding="utf-8") as f:
         csv_reader = csv.reader(f)
         counter = 0
@@ -1542,7 +1543,7 @@ def new_main():
             func_list.append(row[0])
             counter += 1
         print("Total %d lines." % counter)
-
+        print("len(func) : %d" % len(func_list))
         for func in func_list:
             if func is not None:
                 print(func)
